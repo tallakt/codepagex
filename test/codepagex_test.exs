@@ -38,6 +38,16 @@ defmodule CodepagexTest do
     assert Codepagex.to_string("ETSI/GSM0338", <<27, 101>>) == {:ok, "€"}
   end
 
+  test "to_string! should work for ETSI/GSM0338" do
+    assert Codepagex.to_string!("ETSI/GSM0338", <<96>>) == "¿"
+  end
+
+  test "to_string! should fail for ETSI/GSM0338 undefined character" do
+    assert_raise RuntimeError, fn ->
+      Codepagex.to_string!("ETSI/GSM0338", <<128>>)
+    end
+  end
+
   test "from_string should work for ISO8859/8859-1" do
     assert Codepagex.from_string("ISO8859/8859-1", "hello æøå") == {:ok, @iso_hello}
   end
@@ -58,5 +68,29 @@ defmodule CodepagexTest do
     assert Codepagex.from_string("ETSI/GSM0338", "€") == {:ok, <<27, 101>>}
   end
 
+  test "from_string! should work for ETSI/GSM0338" do
+    assert Codepagex.from_string!("ETSI/GSM0338", "¿") == <<96>>
+  end
 
+  test "from_string! should raise exception for undefined character" do
+    assert_raise RuntimeError, fn ->
+      Codepagex.from_string!("ETSI/GSM0338", "൨")
+    end
+  end
+
+  test "translate works between ISO8859/8859-1 and ETSI/GSM0338" do
+    assert Codepagex.translate(:iso_8859_1, "ETSI/GSM0338", @iso_hello)
+      == {:ok, "hello " <> <<29, 12, 15>>}
+  end
+
+  test "translate! works between ISO8859/8859-1 and ETSI/GSM0338" do
+    assert Codepagex.translate!(:iso_8859_1, "ETSI/GSM0338", @iso_hello)
+      == "hello " <> <<29, 12, 15>>
+  end
+
+  test "translate! raises exception on failure" do
+    assert_raise RuntimeError, fn ->
+      Codepagex.translate!(:iso_8859_1, "ETSI/GSM0338", "൨")
+    end
+  end
 end

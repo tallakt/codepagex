@@ -38,7 +38,7 @@ defmodule Codepagex.Mappings.Helpers do
   end
 
   defmacro def_from_string(name, mapping) do
-    qq = quote(bind_quoted: [n: name, m: mapping], unquote: false) do
+    quote(bind_quoted: [n: name, m: mapping], unquote: false) do
       alias Codepagex.Mappings.Helpers
       fn_name = Helpers.function_name_for_mapping_name("from_string", n)
 
@@ -60,8 +60,6 @@ defmodule Codepagex.Mappings.Helpers do
 
       # TODO: Have a way to deal with missing code points
     end
-    IO.puts Macro.to_string(qq)
-    qq
   end
 end
 

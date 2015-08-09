@@ -58,9 +58,21 @@ defmodule Codepagex do
     end
   end
 
-  def translate(mapping_from, _mapping_to, binary) do
-    binary
-    |> to_string(mapping_from)
-    #  |> from_string(mapping_to)
+  def translate(mapping_from, mapping_to, binary) do
+    case to_string(mapping_from, binary) do
+      {:ok, b} ->
+        from_string(mapping_to, b)
+      err = _ ->
+        err
+    end
+  end
+
+  def translate!(mapping_from, mapping_to, binary) do
+    case translate(mapping_from, mapping_to, binary) do
+      {:ok, result} ->
+        result
+      {:error, reason} ->
+        raise reason
+    end
   end
 end
