@@ -46,4 +46,17 @@ defmodule CodepagexTest do
     assert Codepagex.from_string(:iso_8859_1, "hello æøå") == {:ok, @iso_hello}
   end
 
+  test "from_string should work for ETSI/GSM0338" do
+    assert Codepagex.from_string("ETSI/GSM0338", "¿") == {:ok, <<96>>}
+  end
+
+  test "from_string should fail for ETSI/GSM0338 undefined character" do
+    assert Codepagex.from_string("ETSI/GSM0338", "൨") == {:error, @missing}
+  end
+
+  test "from_string should succeed for ETSI/GSM0338 multibyte character" do
+    assert Codepagex.from_string("ETSI/GSM0338", "€") == {:ok, <<27, 101>>}
+  end
+
+
 end
