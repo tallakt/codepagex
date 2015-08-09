@@ -48,6 +48,13 @@ defmodule CodepagexTest do
     end
   end
 
+  test "to_string returns error on unknown mapping" do
+    assert Codepagex.to_string(:unknown, "test")
+            == {:error, "Unknown mapping :unknown"}
+    assert Codepagex.to_string("bogus", "test")
+            == {:error, "Unknown mapping \"bogus\""}
+  end
+
   test "from_string should work for ISO8859/8859-1" do
     assert Codepagex.from_string("ISO8859/8859-1", "hello æøå") == {:ok, @iso_hello}
   end

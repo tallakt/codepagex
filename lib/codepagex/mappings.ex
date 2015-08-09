@@ -104,6 +104,8 @@ defmodule Codepagex.Mappings do
     end
   end
 
+  def to_string(mapping, _), do: {:error, "Unknown mapping #{inspect mapping}"}
+
   # define the from_string_xxx for each mapping
   for {n, m} <- @mappings, do: Helpers.def_from_string(n, m)
 
@@ -113,5 +115,7 @@ defmodule Codepagex.Mappings do
       unquote(Helpers.function_name_for_mapping_name("from_string", name))(binary, [])
     end
   end
+
+  def from_string(mapping, _), do: {:error, "Unknown mapping #{inspect mapping}"}
 end
 
