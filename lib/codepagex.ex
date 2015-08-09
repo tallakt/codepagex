@@ -1,24 +1,66 @@
-defmodule Codepagex.Helpers do
-  def name_for_file(filename) do
-    m = Regex.run ~r|unicode/(.*)[.]txt|i, filename
-    m[1]
-  end
-end
-
 defmodule Codepagex do
-  require Codepagex.Helpers
-  import Codepagex.Helpers
 
-  @mapping_folder __DIR__ |> Path.join(~w(.. unicode))
-  @mapping_files (
-    @mapping_folder
-    |> Path.join(~w(** *.TXT))
-    |> Path.wildcard
-    |> Enum.reject(&(String.match(&1, ~r(README)i)))
-    |> Enum.filter(&(String.match(&1, ~r(8859-1)))) # debug
-    )
-  @names_files for n <- @mapping_files, do: {n, name_for_file(n)}, into: %{}
-  @names @names_files |> Dict.keys |> Enum.sort
+  # aliases
+  @iso_aliases for n <- 1..16, do: {:"iso_8859_#{n}", "ISO8859/8859-#{n}"}
+  @ascii_alias [{:ascii, "VENDORS/MISC/US-ASCII-QUOTES"}]
+  @alias_table (@iso_aliases ++ @ascii_alias) |> Enum.into %{}
 
-  def list_codepages, do: @names
+  def aliases, do: @alias_table
+
+  def list_mappings, do: Codepagex.Mappings.list_mappings
+
+  # create a to_string implementation for each alias
+  for {aliaz, mapping} <- @alias_table do
+    def to_string(unquote(aliaz), binary) do
+      Codepagex.Mappings.to_string(unquote(mapping |> String.to_atom), binary)
+    end
+  end
+
+  for {aliaz, mapping} <- @alias_table do
+    def from_string(unquote(aliaz), binary) do
+      Codepagex.Mappings.from_string(unquote(mapping |> String.to_atom), binary)
+    end
+  end
+
+  @mappings_atom Codepagex.Mappings.list_mappings |> Enum.map(&String.to_atom/1)
+
+  def to_string(mapping, binary) when is_atom(mapping) do
+    Codepagex.Mappings.to_string(mapping, binary)
+  end
+
+  def to_string(mapping, binary) when is_binary(mapping) do
+    to_string(String.to_existing_atom(mapping), binary)
+  end
+
+  def to_string!(mapping, binary) do
+    case to_string(mapping, binary) do
+      {:ok, result} ->
+        result
+      {:error, reason} ->
+        raise reason
+    end
+  end
+
+  def from_string(mapping, binary) when is_atom(mapping) do
+    Codepagex.Mappings.from_string(mapping, binary)
+  end
+
+  def from_string(mapping, binary) when is_binary(mapping) do
+    from_string(String.to_existing_atom(mapping), binary)
+  end
+
+  def from_string!(mapping, binary) do
+    case from_string(mapping, binary) do
+      {:ok, result} ->
+        result
+      {:error, reason} ->
+        raise reason
+    end
+  end
+
+  def translate(mapping_from, _mapping_to, binary) do
+    binary
+    |> to_string(mapping_from)
+    #  |> from_string(mapping_to)
+  end
 end
