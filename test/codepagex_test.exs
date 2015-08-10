@@ -1,5 +1,6 @@
 defmodule CodepagexTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
+  doctest Codepagex
 
   @iso_hello "hello "<> <<230, 248, 229>>
   @missing "Missing code point"
@@ -85,6 +86,12 @@ defmodule CodepagexTest do
     end
   end
 
+  test "from_string returns error on unknown mapping" do
+    assert Codepagex.from_string(:unknown, "test")
+            == {:error, "Unknown mapping :unknown"}
+    assert Codepagex.from_string("bogus", "test")
+            == {:error, "Unknown mapping \"bogus\""}
+  end
   test "translate works between ISO8859/8859-1 and ETSI/GSM0338" do
     assert Codepagex.translate(:iso_8859_1, "ETSI/GSM0338", @iso_hello)
       == {:ok, "hello " <> <<29, 12, 15>>}

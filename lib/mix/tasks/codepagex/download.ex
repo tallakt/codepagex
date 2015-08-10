@@ -1,4 +1,20 @@
 defmodule Mix.Tasks.Codepagex.Download do
+  @moduledoc """
+  This mix task wil download the source mapping files from http://unicode.org
+
+  The files should already be present in the git repository, but if necessary,
+  this mix task may be run to refresh them.
+
+  `wget` is assumed to be installed.
+
+  Some files are left out of the download process altogether, while others are
+  filtered by `.gitignore`, depending on what seemed most practical.
+
+  ## Synopsis
+
+  $ mix codepagex.download
+
+  """
   use Mix.Task
 
   @ftp "ftp://ftp.unicode.org/Public/MAPPINGS/"

@@ -44,11 +44,11 @@ iex> Codepagex.from_string! :iso_8859_1, "Hello æøåÆØÅ!"
 
 ## Remaining work
 
-- A few encodings are not yet supported due to different reasons
+- A few encodings are not yet supported for different reasons
 - Optimize lookup so that a range with equal offset may be treated in one 
   pattern match
-- Add moduledocs
-- More text in README
-- Better reporting of error messages
 - Supply a function to deal with undefined characters
+- select encodings in mix.exs
+- a bunch of warnings about shadowed parameters durin compilation
+- add specs
 

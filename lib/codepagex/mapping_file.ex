@@ -1,4 +1,6 @@
 defmodule Codepagex.MappingFile do
+  @moduledoc false
+
   @ignored ~r/^\s*(#.*|\n|#{<<26>>})$/ # 26: Ctrl+Z
 
   @re ~r/^0x(([[:xdigit:]]{2})+)\s*\t+(0x(([[:xdigit:]]{2})+)\s*\t+)?#/

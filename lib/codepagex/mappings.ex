@@ -1,4 +1,6 @@
 defmodule Codepagex.Mappings.Helpers do
+  @moduledoc false
+
   def name_for_file(filename) do
     Regex.run(~r|unicode/(.*)[.]txt|i, filename)
     |> Enum.at(1)
@@ -64,6 +66,8 @@ defmodule Codepagex.Mappings.Helpers do
 end
 
 defmodule Codepagex.Mappings do
+  @moduledoc false
+
   require Codepagex.Mappings.Helpers
   alias Codepagex.Mappings.Helpers
 
