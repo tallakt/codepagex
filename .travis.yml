@@ -1,0 +1,17 @@
+language: elixir
+elixir:
+  - 1.0.4
+otp_release:
+  - 17.4
+sudo: false # to use faster container based build environment
+env:
+  - ELIXIR_ERL_OPTIONS=""
+  - ELIXIR_ERL_OPTIONS="+T 9"
+script:
+  - mix test
+after_script:
+  - mix deps.get --only docs
+  - MIX_ENV=docs mix inch.report
+notifications:
+  recipients:
+    - tallak@tveide.net
