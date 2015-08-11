@@ -30,7 +30,7 @@ iex> Codepagex.to_string :iso_8859_1, <<72, 101, 108, 108, 111, 32, 230, 248,
 
 ## Encodings
 
-A full list of encodings is found by running `Codepagex.list_encodings`. 
+A full list of encodings is found by running `Codepagex.encoding_list/0`. 
 
 The encodings are best supplied as an atom, or else the string is converted to
 atom for you (but with a somewhat less efficient function lookup). Eg:
