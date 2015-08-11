@@ -3,7 +3,7 @@ defmodule Codepagex do
   Codepagex is a pure Elixir module to provide conversion between text in 
   different codepages to and from Elixir strings in utf-8 format.
 
-  A list of supported mappings is emmitted by list_mappings/0, a list of 
+  A list of supported encodings is emmitted by encoding_list/0, a list of 
   shorthand aliases by aliases/0.
 
   For conversion use the functions to_string/2, from_string/2 and translate/3.
@@ -22,27 +22,27 @@ defmodule Codepagex do
 
   @doc """
   Returns a list of shorthand aliases that may be used instead of the full name
-  of the mapping. For a list of full mappings, see list_mappings/0
+  of the encoding. For a full list of encodings, see encoding_list/0
 
   The available aliases are: #{"\n\n" <> @aliases_markdown}
   """
   def aliases, do: @alias_table
 
-  @mappings_markdown (
-    Codepagex.Mappings.list_mappings
+  @encodings_markdown (
+    Codepagex.Mappings.encoding_list
     |> Enum.map(fn m -> "  - #{m}" end)
     |> Enum.join("\n")
     )
 
   @doc """
-  Returns a list of the supported mappings. These are extracted from 
-  http://unicode.org/ and the names correspond to a mapping file on that page
+  Returns a list of the supported encodings. These are extracted from 
+  http://unicode.org/ and the names correspond to a encoding file on that page
 
   For a list of shorthand names, see aliases/0
 
-  The available mappings are: #{"\n\n" <> @mappings_markdown}
+  The available encodings are: #{"\n\n" <> @encodings_markdown}
   """
-  def list_mappings, do: Codepagex.Mappings.list_mappings
+  def encoding_list, do: Codepagex.Mappings.encoding_list
 
   @doc """
   Converts a binary in a given encoding to an Elixir string in utf-8 encoding.
@@ -55,29 +55,29 @@ defmodule Codepagex do
       {:error, "Missing code point"}
 
 
-  The mapping parameter should be in list_mappings/0 or aliases/0. If it is a
-  full mapping name, it may be passed as an atom or string.
+  The encoding parameter should be in encoding_list/0 or aliases/0. If it is a
+  full encoding name, it may be passed as an atom or string.
 
   """
   # create a to_string implementation for each alias
-  for {aliaz, mapping} <- @alias_table do
+  for {aliaz, encoding} <- @alias_table do
     def to_string(unquote(aliaz), binary) do
-      Codepagex.Mappings.to_string(unquote(mapping |> String.to_atom), binary)
+      Codepagex.Mappings.to_string(unquote(encoding |> String.to_atom), binary)
     end
   end
 
-  @mappings_atom Codepagex.Mappings.list_mappings |> Enum.map(&String.to_atom/1)
+  @encodings_atom Codepagex.Mappings.encoding_list |> Enum.map(&String.to_atom/1)
 
-  def to_string(mapping, binary) when is_atom(mapping) do
-    Codepagex.Mappings.to_string(mapping, binary)
+  def to_string(encoding, binary) when is_atom(encoding) do
+    Codepagex.Mappings.to_string(encoding, binary)
   end
 
-  def to_string(mapping, binary) when is_binary(mapping) do
+  def to_string(encoding, binary) when is_binary(encoding) do
     try do 
-      to_string(String.to_existing_atom(mapping), binary)
+      to_string(String.to_existing_atom(encoding), binary)
     rescue
       e in ArgumentError ->
-        {:error, "Unknown mapping #{inspect mapping}"}
+        {:error, "Unknown encoding #{inspect encoding}"}
     end
   end
 
@@ -90,8 +90,8 @@ defmodule Codepagex do
       iex> Codepagex.to_string!("ETSI/GSM0338", <<128>>)
       ** (RuntimeError) Missing code point
   """
-  def to_string!(mapping, binary) do
-    case to_string(mapping, binary) do
+  def to_string!(encoding, binary) do
+    case to_string(encoding, binary) do
       {:ok, result} ->
         result
       {:error, reason} ->
@@ -108,25 +108,25 @@ defmodule Codepagex do
       iex> Codepagex.from_string(:iso_8859_1, "ʒ")
       {:error, "Missing code point"}
 
-  The mapping parameter should be in list_mappings/0 or aliases/0. It may be 
-  passed as an atom, or a string for full mapping names.
+  The encoding parameter should be in encoding_list/0 or aliases/0. It may be 
+  passed as an atom, or a string for full encoding names.
   """
-  for {aliaz, mapping} <- @alias_table do
+  for {aliaz, encoding} <- @alias_table do
     def from_string(unquote(aliaz), binary) do
-      Codepagex.Mappings.from_string(unquote(mapping |> String.to_atom), binary)
+      Codepagex.Mappings.from_string(unquote(encoding |> String.to_atom), binary)
     end
   end
 
-  def from_string(mapping, binary) when is_atom(mapping) do
-    Codepagex.Mappings.from_string(mapping, binary)
+  def from_string(encoding, binary) when is_atom(encoding) do
+    Codepagex.Mappings.from_string(encoding, binary)
   end
 
-  def from_string(mapping, binary) when is_binary(mapping) do
+  def from_string(encoding, binary) when is_binary(encoding) do
     try do
-      from_string(String.to_existing_atom(mapping), binary)
+      from_string(String.to_existing_atom(encoding), binary)
     rescue
       e in ArgumentError ->
-        {:error, "Unknown mapping #{inspect mapping}"}
+        {:error, "Unknown encoding #{inspect encoding}"}
     end
   end
 
@@ -141,11 +141,11 @@ defmodule Codepagex do
       iex> Codepagex.from_string!(:iso_8859_1, "ʒ")
       ** (RuntimeError) Missing code point
 
-  The mapping parameter should be in list_mappings/0 or aliases/0. It may be 
-  passed as an atom, or a string for full mapping names.
+  The encoding parameter should be in encoding_list/0 or aliases/0. It may be 
+  passed as an atom, or a string for full encoding names.
   """
-  def from_string!(mapping, binary) do
-    case from_string(mapping, binary) do
+  def from_string!(encoding, binary) do
+    case from_string(encoding, binary) do
       {:ok, result} ->
         result
       {:error, reason} ->
@@ -163,13 +163,13 @@ defmodule Codepagex do
       iex> Codepagex.translate(:iso_8859_1,:iso_8859_2, <<174>>)
       {:error, "Missing code point"}
 
-  The mapping parameters should be in list_mappings/0 or aliases/0. It may be 
-  passed as an atom, or a string for full mapping names.
+  The encoding parameters should be in encoding_list/0 or aliases/0. It may be 
+  passed as an atom, or a string for full encoding names.
   """
-  def translate(mapping_from, mapping_to, binary) do
-    case to_string(mapping_from, binary) do
+  def translate(encoding_from, encoding_to, binary) do
+    case to_string(encoding_from, binary) do
       {:ok, b} ->
-        from_string(mapping_to, b)
+        from_string(encoding_to, b)
       err = _ ->
         err
     end
@@ -185,11 +185,11 @@ defmodule Codepagex do
       iex> Codepagex.translate!(:iso_8859_1,:iso_8859_2, <<174>>)
       ** (RuntimeError) Missing code point
 
-  The mapping parameters should be in list_mappings/0 or aliases/0. It may be 
-  passed as an atom, or a string for full mapping names.
+  The encoding parameters should be in encoding_list/0 or aliases/0. It may be 
+  passed as an atom, or a string for full encoding names.
   """
-  def translate!(mapping_from, mapping_to, binary) do
-    case translate(mapping_from, mapping_to, binary) do
+  def translate!(encoding_from, encoding_to, binary) do
+    case translate(encoding_from, encoding_to, binary) do
       {:ok, result} ->
         result
       {:error, reason} ->

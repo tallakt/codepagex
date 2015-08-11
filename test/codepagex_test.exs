@@ -5,9 +5,9 @@ defmodule CodepagexTest do
   @iso_hello "hello "<> <<230, 248, 229>>
   @missing "Missing code point"
 
-  test "list_codepages should return some existing values" do
-    assert "ETSI/GSM0338" in Codepagex.list_mappings
-    assert "VENDORS/NEXT/NEXTSTEP" in Codepagex.list_mappings
+  test "encoding_list should return some existing values" do
+    assert "ETSI/GSM0338" in Codepagex.encoding_list
+    assert "VENDORS/NEXT/NEXTSTEP" in Codepagex.encoding_list
   end
 
   test "aliases should contain come aliases" do
@@ -49,11 +49,11 @@ defmodule CodepagexTest do
     end
   end
 
-  test "to_string returns error on unknown mapping" do
+  test "to_string returns error on unknown encoding" do
     assert Codepagex.to_string(:unknown, "test")
-            == {:error, "Unknown mapping :unknown"}
+            == {:error, "Unknown encoding :unknown"}
     assert Codepagex.to_string("bogus", "test")
-            == {:error, "Unknown mapping \"bogus\""}
+            == {:error, "Unknown encoding \"bogus\""}
   end
 
   test "from_string should work for ISO8859/8859-1" do
@@ -86,11 +86,11 @@ defmodule CodepagexTest do
     end
   end
 
-  test "from_string returns error on unknown mapping" do
+  test "from_string returns error on unknown encoding" do
     assert Codepagex.from_string(:unknown, "test")
-            == {:error, "Unknown mapping :unknown"}
+            == {:error, "Unknown encoding :unknown"}
     assert Codepagex.from_string("bogus", "test")
-            == {:error, "Unknown mapping \"bogus\""}
+            == {:error, "Unknown encoding \"bogus\""}
   end
   test "translate works between ISO8859/8859-1 and ETSI/GSM0338" do
     assert Codepagex.translate(:iso_8859_1, "ETSI/GSM0338", @iso_hello)

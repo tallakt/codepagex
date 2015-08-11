@@ -1,10 +1,11 @@
 Codepagex
 =========
 
-An elixir library to convert between codepages for strings.
+An elixir library to convert between string encodings to and from utf-8. Like
+iconv, but pure Elixir.
 
 
-All the mappings are fetched from unicode.org tables and conversion functions
+All the encodings are fetched from unicode.org tables and conversion functions
 are generated from these.
 
 _Demo quality_
@@ -24,9 +25,9 @@ iex> Codepagex.to_string :iso_8859_1, <<72, 101, 108, 108, 111, 32, 230, 248,
 
 ## Encodings
 
-A full list of encodings is found by running `Codepagex.list_mappings`. 
+A full list of encodings is found by running `Codepagex.list_encodings`. 
 
-The mappings are best supplied as an atom, or else the string is converted to
+The encodings are best supplied as an atom, or else the string is converted to
 atom for you (but with a somewhat less efficient function lookup). Eg:
 
 ```elixir
