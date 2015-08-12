@@ -131,7 +131,52 @@ defmodule Codepagex do
 
 
   @doc """
-  TODO
+  Convert a binary in a specified encoding into an Elixir string in utf-8
+  encoding
+
+  Compared to `to_string/2`, this function has a function parameter to handle
+  any bytes that are not supported by the encoding format. Depending on the
+  supplied function, the function may or may not return an error.
+
+  The function `use_utf_replacement/2` may be used a a parameter if you want
+  to make sure the conversion succeeds even if the binary contains invalid
+  bytes.
+
+  The function `missing_fun` must receive two arguments, the first being a
+  binary containing the rest of the `binary` parameter that is still
+  unprocessed. The second is the accumultor `acc`. it must return:
+
+  - `{:ok, replacement, new_rest, new_acc}` to continue processing
+  - `{:error, reason, new_acc}` to return an error from `to_string/4`
+
+  The `acc` parameter is passed to the `missing_fun` every time it is called,
+  and updated according to the return value of `missing_fun`. In the end it is
+  returned in the return value of `to_string/4`. The accumulator is useful if
+  you need to keep track of a state in the string, for example left-right mode
+  or the number of replacements done. In some cases it may be ignored.
+
+
+  ## Examples
+
+  Using the `use_utf_replacement` function to handle invalid bytes:
+
+      iex> iso = "Hello æøå!" |> from_string!(:iso_8859_1)
+      iex> to_string!(iso, :ascii, &use_utf_replacement/2)
+      "Hello � � � !"
+
+  In this example, we replace missing chars with "#" and then count the number
+  of replacements done.
+
+      iex> iso = "Hello æøå!" |> from_string!(:iso_8859_1)
+      iex> f = fn <<_ :: utf8, rest :: binary>>, acc ->
+      ...>                {:ok, "#", rest, acc + 1}
+      ...> end
+      iex> to_string(iso, :ascii, f, 0)
+      {:ok, "Hello ###!", 3}
+
+
+
+  
   """
   def to_string(binary, encoding, missing_fun, acc \\ nil)
 

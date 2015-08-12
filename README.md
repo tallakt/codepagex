@@ -4,7 +4,7 @@ Codepagex
 [![Build Status](https://travis-ci.org/tallakt/codepagex.svg)](https://travis-ci.org/tallakt/codepagex)
 
 An elixir library to convert between string encodings to and from utf-8. Like
-iconv, but pure Elixir.
+iconv, but written in pure Elixir.
 
 
 All the encodings are fetched from unicode.org tables and conversion functions
@@ -20,11 +20,11 @@ _Demo quality_
 The package is assumed to be interfaced using the `Codepagex` module.
 
 ```elixir
-iex> Codepagex.from_string :iso_8859_1, "Hello æøåÆØÅ!"
+iex> Codepagex.from_string "Hello æøåÆØÅ!", :iso_8859_1
 {:ok, <<72, 101, 108, 108, 111, 32, 230, 248, 229, 198, 216, 197, 33>>}
 
-iex> Codepagex.to_string :iso_8859_1, <<72, 101, 108, 108, 111, 32, 230, 248,
-...> 229, 198, 216, 197, 33>>
+iex> Codepagex.to_string <<72, 101, 108, 108, 111, 32, 230, 248,
+...> 229, 198, 216, 197, 33>>, :iso_8859_1
 {:ok, "Hello æøåÆØÅ!"}
 ```
 
@@ -36,7 +36,7 @@ The encodings are best supplied as an atom, or else the string is converted to
 atom for you (but with a somewhat less efficient function lookup). Eg:
 
 ```elixir
-iex> Codepagex.from_string :"VENDORS/MICSFT/MAC/TURKISH", "æøå"
+iex> Codepagex.from_string "æøå", :"VENDORS/MICSFT/MAC/TURKISH"
 {:ok, <<190, 191, 140>>}
 ```
 
@@ -44,7 +44,7 @@ For some encodings, an alias is set up for easier dispatch. The list of aliases
 is found by running `Codepagex.aliases/0`. The code looks like: 
 
 ```elixir
-iex> Codepagex.from_string! :iso_8859_1, "Hello æøåÆØÅ!"
+iex> Codepagex.from_string! "Hello æøåÆØÅ!", :iso_8859_1
 <<72, 101, 108, 108, 111, 32, 230, 248, 229, 198, 216, 197, 33>>
 ```
 
@@ -57,4 +57,3 @@ iex> Codepagex.from_string! :iso_8859_1, "Hello æøåÆØÅ!"
 - select encodings in mix.exs
 - a bunch of warnings about shadowed parameters durin compilation
 - add specs
-- change parameter order to allow piping
