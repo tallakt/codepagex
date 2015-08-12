@@ -15,52 +15,65 @@ defmodule Codepagex.Mappings.Helpers do
   end
 
   defmacro def_to_string(name, encoding) do
-    quote(bind_quoted: [n: name, m: encoding], unquote: false) do
+    quote(bind_quoted: [n: name, e: encoding], unquote: false) do
       alias Codepagex.Mappings.Helpers
       fn_name = Helpers.function_name_for_mapping_name("to_string", n)
 
-      for {from, to} <- m do
-        def unquote(fn_name)(unquote(from) <> rest, acc) do
-          unquote(fn_name)(rest, [unquote(to) | acc])
+      for {from, to} <- e do
+        def unquote(fn_name)(unquote(from) <> rest, acc, missing_fun, outer_acc) do
+          unquote(fn_name)(rest, [unquote(to) | acc], missing_fun, outer_acc)
         end
       end
 
-      def unquote(fn_name)("", acc) do
+      def unquote(fn_name)("", acc, _, outer_acc) do
         rev = acc |> :lists.reverse
         result = for code_point <- rev, into: "", do: <<code_point :: utf8>>
-        {:ok, result}
+        {:ok, result, outer_acc}
       end
 
-      def unquote(fn_name)(_, _) do
-        {:error, "Missing code point"}
+      def unquote(fn_name)(rest, acc, missing_fun, outer_acc) do
+        case missing_fun.(rest, acc) do
+          res = {:error, _, _} ->
+            res
+          {:ok, added_string, new_rest, new_outer_acc} ->
+            codepoints = 
+              for cp <- String.codepoints(added_string) do
+                <<number :: utf8>> = cp
+                number
+              end
+              |> Enum.reverse
+            unquote(fn_name)(new_rest, codepoints ++ acc, missing_fun, new_outer_acc)
+        end
       end
-
-      # TODO: Have a way to deal with missing code points
     end
   end
 
   defmacro def_from_string(name, encoding) do
-    quote(bind_quoted: [n: name, m: encoding], unquote: false) do
+    quote(bind_quoted: [n: name, e: encoding], unquote: false) do
       alias Codepagex.Mappings.Helpers
       fn_name = Helpers.function_name_for_mapping_name("from_string", n)
 
-      for {to, from} <- m do
-        def unquote(fn_name)(<<unquote(from) :: utf8>> <> rest, acc) do
-          unquote(fn_name)(rest, [unquote(to) | acc])
+      for {to, from} <- e do
+        def unquote(fn_name)(<<unquote(from) :: utf8>> <> rest, acc, missing_fun, outer_acc) do
+          unquote(fn_name)(rest, [unquote(to) | acc], missing_fun, outer_acc)
         end
       end
 
-      def unquote(fn_name)("", acc) do
+      def unquote(fn_name)("", acc, _, outer_acc) do
         rev = acc |> :lists.reverse
         result = for chars <- rev, into: "", do: chars
-        {:ok, result}
+        {:ok, result, outer_acc}
       end
 
-      def unquote(fn_name)(_, _) do
-        {:error, "Missing code point"}
+      def unquote(fn_name)(rest, acc, missing_fun, outer_acc) do
+        case missing_fun.(rest, acc) do
+          res = {:error, _, _} ->
+            res
+          {:ok, added_binary, new_rest, new_outer_acc} ->
+            new_acc = Enum.reverse(added_binary) ++ acc
+            unquote(fn_name)(new_rest, new_acc, missing_fun, new_outer_acc)
+        end
       end
-
-      # TODO: Have a way to deal with missing code points
     end
   end
 end
@@ -99,23 +112,29 @@ defmodule Codepagex.Mappings do
 
   # define methods to forward to_string(mapping, binary) to a specific implementation
   for name <- @names do
-    def to_string(unquote(name |> String.to_atom), binary) do
-      unquote(Helpers.function_name_for_mapping_name("to_string", name))(binary, [])
+    fun_name = Helpers.function_name_for_mapping_name("to_string", name)
+    def to_string(unquote(name |> String.to_atom), binary, missing_fun, acc) do
+      unquote(fun_name)(binary, [], missing_fun, acc)
     end
   end
 
-  def to_string(encoding, _), do: {:error, "Unknown encoding #{inspect encoding}"}
+  def to_string(encoding, _, _, acc) do
+    {:error, "Unknown encoding #{inspect encoding}", acc}
+  end
 
   # define the from_string_xxx for each encoding
   for {n, m} <- @encodings, do: Helpers.def_from_string(n, m)
 
   # define methods to forward from_string(encoding, binary) to a specific implementation
   for name <- @names do
-    def from_string(unquote(name |> String.to_atom), binary) do
-      unquote(Helpers.function_name_for_mapping_name("from_string", name))(binary, [])
+    fun_name = Helpers.function_name_for_mapping_name("from_string", name)
+    def from_string(unquote(name |> String.to_atom), binary, missing_fun, acc) do
+      unquote(fun_name)(binary, [], missing_fun, acc)
     end
   end
 
-  def from_string(encoding, _), do: {:error, "Unknown encoding #{inspect encoding}"}
+  def from_string(encoding, _, _, acc) do
+    {:error, "Unknown encoding #{inspect encoding}", acc}
+  end
 end
 

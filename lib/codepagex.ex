@@ -34,6 +34,8 @@ defmodule Codepagex do
     |> Enum.join("\n")
     )
 
+  @encodings_atom Codepagex.Mappings.encoding_list |> Enum.map(&String.to_atom/1)
+
   @doc """
   Returns a list of the supported encodings. These are extracted from 
   http://unicode.org/ and the names correspond to a encoding file on that page
@@ -44,6 +46,19 @@ defmodule Codepagex do
   """
   def encoding_list, do: Codepagex.Mappings.encoding_list
 
+  defp error_on_missing(_, _) do
+    {:error, "Invalid bytes for encoding", nil}
+  end
+
+  def silently_replace_invalid_bytes(<<_, rest::binary>>, _) do
+    # � replacement character used to replace an unknown or unrepresentable
+    # character
+    {:ok,"� ", rest, nil}
+  end
+
+  defp strip_acc({code, return_value, _acc}), do: {code, return_value}
+
+
   @doc """
   Converts a binary in a given encoding to an Elixir string in utf-8 encoding.
   The encoding encoding
@@ -52,32 +67,40 @@ defmodule Codepagex do
       {:ok, "HÉ¦¦Ó"}
 
       iex> Codepagex.to_string("ETSI/GSM0338", <<128>>)
-      {:error, "Missing code point"}
+      {:error, "Invalid bytes for encoding"}
 
 
   The encoding parameter should be in encoding_list/0 or aliases/0. If it is a
   full encoding name, it may be passed as an atom or string.
-
   """
-  # create a to_string implementation for each alias
+  def to_string(encoding, binary) do
+    to_string(encoding, binary, &error_on_missing/2)
+    |> strip_acc
+  end
+
+
+  @doc """
+  TODO
+  """
+  def to_string(encoding, binary, missing_fun, acc \\ nil)
+
+  # create a forwarding to_string implementation for each alias
   for {aliaz, encoding} <- @alias_table do
-    def to_string(unquote(aliaz), binary) do
-      Codepagex.Mappings.to_string(unquote(encoding |> String.to_atom), binary)
+    def to_string(unquote(aliaz), binary, missing_fun, acc) do
+      to_string(unquote(encoding |> String.to_atom), binary, missing_fun, acc)
     end
   end
 
-  @encodings_atom Codepagex.Mappings.encoding_list |> Enum.map(&String.to_atom/1)
-
-  def to_string(encoding, binary) when is_atom(encoding) do
-    Codepagex.Mappings.to_string(encoding, binary)
+  def to_string(encoding, binary, missing_fun, acc) when is_atom(encoding) do
+    Codepagex.Mappings.to_string(encoding, binary, missing_fun, acc)
   end
 
-  def to_string(encoding, binary) when is_binary(encoding) do
+  def to_string(encoding, binary, missing_fun, acc) when is_binary(encoding) do
     try do 
-      to_string(String.to_existing_atom(encoding), binary)
+      to_string(String.to_existing_atom(encoding), binary, missing_fun, acc)
     rescue
-      e in ArgumentError ->
-        {:error, "Unknown encoding #{inspect encoding}"}
+      ArgumentError ->
+        {:error, "Unknown encoding #{inspect encoding}", acc}
     end
   end
 
@@ -88,13 +111,20 @@ defmodule Codepagex do
       "HÉ¦¦Ó"
 
       iex> Codepagex.to_string!("ETSI/GSM0338", <<128>>)
-      ** (RuntimeError) Missing code point
+      ** (RuntimeError) Invalid bytes for encoding
   """
   def to_string!(encoding, binary) do
-    case to_string(encoding, binary) do
-      {:ok, result} ->
+    to_string!(encoding, binary, &error_on_missing/2, nil)
+  end
+
+  @doc """
+  TODO
+  """
+  def to_string!(encoding, binary, missing_fun, acc \\ nil) do
+    case to_string(encoding, binary, missing_fun, acc) do
+      {:ok, result, _} ->
         result
-      {:error, reason} ->
+      {:error, reason, _} ->
         raise reason
     end
   end
@@ -106,31 +136,44 @@ defmodule Codepagex do
       {:ok, <<72, 201, 166, 166, 211>>}
 
       iex> Codepagex.from_string(:iso_8859_1, "ʒ")
-      {:error, "Missing code point"}
+      {:error, "Invalid bytes for encoding"}
 
   The encoding parameter should be in encoding_list/0 or aliases/0. It may be 
   passed as an atom, or a string for full encoding names.
   """
-  for {aliaz, encoding} <- @alias_table do
-    def from_string(unquote(aliaz), binary) do
-      Codepagex.Mappings.from_string(unquote(encoding |> String.to_atom), binary)
+  def from_string(encoding, string) do
+    from_string(encoding, string, &error_on_missing/2, nil)
+    |> strip_acc
+  end
+
+  @doc """
+  TODO
+  """
+    def from_string(encoding, string, missing_fun, acc \\ nil)
+
+    # aliases are forwarded to proper name
+    for {aliaz, encoding} <- @alias_table do
+      def from_string(unquote(aliaz), string, missing_fun, acc) do
+      Codepagex.Mappings.from_string(
+        unquote(encoding |> String.to_atom), string, missing_fun, acc
+      )
     end
   end
 
-  def from_string(encoding, binary) when is_atom(encoding) do
-    Codepagex.Mappings.from_string(encoding, binary)
+  def from_string(encoding, string, missing_fun, acc) when is_atom(encoding) do
+    Codepagex.Mappings.from_string(encoding, string, missing_fun, acc)
   end
 
-  def from_string(encoding, binary) when is_binary(encoding) do
+  def from_string(encoding, string, missing_fun, acc) when is_binary(encoding) do
     try do
-      from_string(String.to_existing_atom(encoding), binary)
+      from_string(String.to_existing_atom(encoding), string, missing_fun, acc)
     rescue
-      e in ArgumentError ->
-        {:error, "Unknown encoding #{inspect encoding}"}
+      ArgumentError ->
+        {:error, "Unknown encoding #{inspect encoding}", acc}
     end
   end
 
-  @doc ~S"""
+  @doc """
   Converts an Elixir string in utf-8 encoding to a binary in another encoding.
 
   This variant of from_string/2 will raise an exception on error
@@ -139,16 +182,23 @@ defmodule Codepagex do
       <<72, 201, 166, 166, 211>>
 
       iex> Codepagex.from_string!(:iso_8859_1, "ʒ")
-      ** (RuntimeError) Missing code point
+      ** (RuntimeError) Invalid bytes for encoding
 
   The encoding parameter should be in encoding_list/0 or aliases/0. It may be 
   passed as an atom, or a string for full encoding names.
   """
   def from_string!(encoding, binary) do
-    case from_string(encoding, binary) do
-      {:ok, result} ->
+    from_string! encoding, binary, &error_on_missing/2, nil
+  end
+
+  @doc """
+  todo
+  """
+  def from_string!(encoding, string, missing_fun, acc \\ nil) do
+    case from_string(encoding, string, missing_fun, acc) do
+      {:ok, result, _} ->
         result
-      {:error, reason} ->
+      {:error, reason, _} ->
         raise reason
     end
   end
@@ -161,18 +211,19 @@ defmodule Codepagex do
       {:ok, <<174>>}
 
       iex> Codepagex.translate(:iso_8859_1,:iso_8859_2, <<174>>)
-      {:error, "Missing code point"}
+      {:error, "Invalid bytes for encoding"}
 
   The encoding parameters should be in encoding_list/0 or aliases/0. It may be 
   passed as an atom, or a string for full encoding names.
   """
   def translate(encoding_from, encoding_to, binary) do
-    case to_string(encoding_from, binary) do
-      {:ok, b} ->
-        from_string(encoding_to, b)
+    case to_string(encoding_from, binary, &error_on_missing/2) do
+      {:ok, b, _} ->
+        from_string(encoding_to, b, &error_on_missing/2)
       err = _ ->
         err
     end
+    |> strip_acc
   end
 
   @doc """
@@ -183,7 +234,7 @@ defmodule Codepagex do
       <<174>>
 
       iex> Codepagex.translate!(:iso_8859_1,:iso_8859_2, <<174>>)
-      ** (RuntimeError) Missing code point
+      ** (RuntimeError) Invalid bytes for encoding
 
   The encoding parameters should be in encoding_list/0 or aliases/0. It may be 
   passed as an atom, or a string for full encoding names.

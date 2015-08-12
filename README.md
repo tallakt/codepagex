@@ -41,7 +41,7 @@ iex> Codepagex.from_string :"VENDORS/MICSFT/MAC/TURKISH", "æøå"
 ```
 
 For some encodings, an alias is set up for easier dispatch. The list of aliases
-is found by running `Codepagex.aliases`. The code looks like: 
+is found by running `Codepagex.aliases/0`. The code looks like: 
 
 ```elixir
 iex> Codepagex.from_string! :iso_8859_1, "Hello æøåÆØÅ!"
@@ -57,4 +57,4 @@ iex> Codepagex.from_string! :iso_8859_1, "Hello æøåÆØÅ!"
 - select encodings in mix.exs
 - a bunch of warnings about shadowed parameters durin compilation
 - add specs
-
+- change parameter order to allow piping

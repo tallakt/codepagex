@@ -3,7 +3,7 @@ defmodule CodepagexTest do
   doctest Codepagex
 
   @iso_hello "hello "<> <<230, 248, 229>>
-  @missing "Missing code point"
+  @missing "Invalid bytes for encoding"
 
   test "encoding_list should return some existing values" do
     assert "ETSI/GSM0338" in Codepagex.encoding_list
