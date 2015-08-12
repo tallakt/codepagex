@@ -70,7 +70,7 @@ defmodule Codepagex.Mappings.Helpers do
           res = {:error, _, _} ->
             res
           {:ok, added_binary, new_rest, new_outer_acc} ->
-            new_acc = Enum.reverse(added_binary) ++ acc
+            new_acc = [added_binary | acc]
             unquote(fn_name)(new_rest, new_acc, missing_fun, new_outer_acc)
         end
       end
@@ -113,12 +113,12 @@ defmodule Codepagex.Mappings do
   # define methods to forward to_string(mapping, binary) to a specific implementation
   for name <- @names do
     fun_name = Helpers.function_name_for_mapping_name("to_string", name)
-    def to_string(unquote(name |> String.to_atom), binary, missing_fun, acc) do
+    def to_string(binary, unquote(name |> String.to_atom), missing_fun, acc) do
       unquote(fun_name)(binary, [], missing_fun, acc)
     end
   end
 
-  def to_string(encoding, _, _, acc) do
+  def to_string(_, encoding, _, acc) do
     {:error, "Unknown encoding #{inspect encoding}", acc}
   end
 
@@ -128,12 +128,12 @@ defmodule Codepagex.Mappings do
   # define methods to forward from_string(encoding, binary) to a specific implementation
   for name <- @names do
     fun_name = Helpers.function_name_for_mapping_name("from_string", name)
-    def from_string(unquote(name |> String.to_atom), binary, missing_fun, acc) do
-      unquote(fun_name)(binary, [], missing_fun, acc)
+    def from_string(string, unquote(name |> String.to_atom), missing_fun, acc) do
+      unquote(fun_name)(string, [], missing_fun, acc)
     end
   end
 
-  def from_string(encoding, _, _, acc) do
+  def from_string(_, encoding, _, acc) do
     {:error, "Unknown encoding #{inspect encoding}", acc}
   end
 end

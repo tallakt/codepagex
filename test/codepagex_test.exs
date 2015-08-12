@@ -1,6 +1,6 @@
 defmodule CodepagexTest do
   use ExUnit.Case, async: true
-  doctest Codepagex
+  doctest Codepagex, import: true
 
   @iso_hello "hello "<> <<230, 248, 229>>
   @missing "Invalid bytes for encoding"
@@ -16,95 +16,95 @@ defmodule CodepagexTest do
   end
 
   test "to_string should work for ISO8859/8859-1" do
-    assert Codepagex.to_string("ISO8859/8859-1", @iso_hello) == {:ok, "hello æøå"}
+    assert Codepagex.to_string(@iso_hello, "ISO8859/8859-1") == {:ok, "hello æøå"}
   end
 
   test "to_string should work for alias :iso_8859_1" do
-    assert Codepagex.to_string(:iso_8859_1, @iso_hello) == {:ok, "hello æøå"}
+    assert Codepagex.to_string(@iso_hello, :iso_8859_1) == {:ok, "hello æøå"}
   end
 
   test "to_string should work for ETSI/GSM0338" do
-    assert Codepagex.to_string("ETSI/GSM0338", <<96>>) == {:ok, "¿"}
+    assert Codepagex.to_string(<<96>>, "ETSI/GSM0338") == {:ok, "¿"}
   end
 
   test "to_string should fail for ETSI/GSM0338 undefined character" do
-    assert Codepagex.to_string("ETSI/GSM0338", <<128>>) == {:error, @missing}
+    assert Codepagex.to_string(<<128>>, "ETSI/GSM0338") == {:error, @missing}
   end
 
   test "to_string should fail for ETSI/GSM0338 single escape character" do
-    assert Codepagex.to_string("ETSI/GSM0338", <<27>>) == {:error, @missing}
+    assert Codepagex.to_string(<<27>>, "ETSI/GSM0338") == {:error, @missing}
   end
 
   test "to_string should succeed for ETSI/GSM0338 multibyte character" do
-    assert Codepagex.to_string("ETSI/GSM0338", <<27, 101>>) == {:ok, "€"}
+    assert Codepagex.to_string(<<27, 101>>, "ETSI/GSM0338") == {:ok, "€"}
   end
 
   test "to_string! should work for ETSI/GSM0338" do
-    assert Codepagex.to_string!("ETSI/GSM0338", <<96>>) == "¿"
+    assert Codepagex.to_string!(<<96>>, "ETSI/GSM0338") == "¿"
   end
 
   test "to_string! should fail for ETSI/GSM0338 undefined character" do
     assert_raise RuntimeError, fn ->
-      Codepagex.to_string!("ETSI/GSM0338", <<128>>)
+      Codepagex.to_string!(<<128>>, "ETSI/GSM0338")
     end
   end
 
   test "to_string returns error on unknown encoding" do
-    assert Codepagex.to_string(:unknown, "test")
+    assert Codepagex.to_string("test", :unknown)
             == {:error, "Unknown encoding :unknown"}
-    assert Codepagex.to_string("bogus", "test")
+    assert Codepagex.to_string("test", "bogus")
             == {:error, "Unknown encoding \"bogus\""}
   end
 
   test "from_string should work for ISO8859/8859-1" do
-    assert Codepagex.from_string("ISO8859/8859-1", "hello æøå") == {:ok, @iso_hello}
+    assert Codepagex.from_string("hello æøå", "ISO8859/8859-1") == {:ok, @iso_hello}
   end
 
   test "from_string should work for alias :iso_8859_1" do
-    assert Codepagex.from_string(:iso_8859_1, "hello æøå") == {:ok, @iso_hello}
+    assert Codepagex.from_string("hello æøå", :iso_8859_1) == {:ok, @iso_hello}
   end
 
   test "from_string should work for ETSI/GSM0338" do
-    assert Codepagex.from_string("ETSI/GSM0338", "¿") == {:ok, <<96>>}
+    assert Codepagex.from_string("¿", "ETSI/GSM0338") == {:ok, <<96>>}
   end
 
   test "from_string should fail for ETSI/GSM0338 undefined character" do
-    assert Codepagex.from_string("ETSI/GSM0338", "൨") == {:error, @missing}
+    assert Codepagex.from_string("൨", "ETSI/GSM0338") == {:error, @missing}
   end
 
   test "from_string should succeed for ETSI/GSM0338 multibyte character" do
-    assert Codepagex.from_string("ETSI/GSM0338", "€") == {:ok, <<27, 101>>}
+    assert Codepagex.from_string("€", "ETSI/GSM0338") == {:ok, <<27, 101>>}
   end
 
   test "from_string! should work for ETSI/GSM0338" do
-    assert Codepagex.from_string!("ETSI/GSM0338", "¿") == <<96>>
+    assert Codepagex.from_string!("¿", "ETSI/GSM0338") == <<96>>
   end
 
   test "from_string! should raise exception for undefined character" do
     assert_raise RuntimeError, fn ->
-      Codepagex.from_string!("ETSI/GSM0338", "൨")
+      Codepagex.from_string!("൨", "ETSI/GSM0338")
     end
   end
 
   test "from_string returns error on unknown encoding" do
-    assert Codepagex.from_string(:unknown, "test")
+    assert Codepagex.from_string("test", :unknown)
             == {:error, "Unknown encoding :unknown"}
-    assert Codepagex.from_string("bogus", "test")
+    assert Codepagex.from_string("test", "bogus")
             == {:error, "Unknown encoding \"bogus\""}
   end
   test "translate works between ISO8859/8859-1 and ETSI/GSM0338" do
-    assert Codepagex.translate(:iso_8859_1, "ETSI/GSM0338", @iso_hello)
+    assert Codepagex.translate(@iso_hello, :iso_8859_1, "ETSI/GSM0338")
       == {:ok, "hello " <> <<29, 12, 15>>}
   end
 
   test "translate! works between ISO8859/8859-1 and ETSI/GSM0338" do
-    assert Codepagex.translate!(:iso_8859_1, "ETSI/GSM0338", @iso_hello)
+    assert Codepagex.translate!(@iso_hello, :iso_8859_1, "ETSI/GSM0338")
       == "hello " <> <<29, 12, 15>>
   end
 
   test "translate! raises exception on failure" do
     assert_raise RuntimeError, fn ->
-      Codepagex.translate!(:iso_8859_1, "ETSI/GSM0338", "൨")
+      Codepagex.translate!("൨", :iso_8859_1, "ETSI/GSM0338")
     end
   end
 end
