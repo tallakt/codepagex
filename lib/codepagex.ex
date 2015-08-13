@@ -58,7 +58,8 @@ defmodule Codepagex do
   special unicode character and the function will not return an error, or an
   exception in the case of `to_string!/4`
 
-  The accumulator input `acc` of `to_string/4` is ignored and may be omitted.
+  The accumulator input `acc` of `to_string/4` may be nil or a start number,
+  which is incremented by the number of replacements made.
 
   ## Examples
 
@@ -67,10 +68,11 @@ defmodule Codepagex do
       "Hello ���!"
 
   """
-  def use_utf_replacement(<<_, rest::binary>>, _) do
+  def use_utf_replacement(<<_, rest::binary>>, acc) do
     # � replacement character used to replace an unknown or unrepresentable
     # character
-    {:ok,<<0xFFFD :: utf8>>, rest, nil}
+    new_acc = if is_integer(acc), do: acc + 1, else: 1
+    {:ok,<<0xFFFD :: utf8>>, rest, new_acc}
   end
   
 
@@ -88,7 +90,8 @@ defmodule Codepagex do
 
   This function will return as anonymous function to be passed as parameter.
   
-  The accumulator input `acc` of `from_string/4` is ignored and may be omitted.
+  The accumulator input `acc` of `from_string/4` may be nil or a number and the
+  returned `acc` is incremented by the number og replacements made.
 
   ## Examples
 
@@ -104,7 +107,10 @@ defmodule Codepagex do
 
   """
   def replace_nonexistent(replace_with) do
-    fn <<_ :: utf8, rest :: binary>>, _ -> {:ok, replace_with, rest, nil} end
+    fn <<_ :: utf8, rest :: binary>>, acc ->
+      new_acc = if is_integer(acc), do: acc + 1, else: 1
+      {:ok, replace_with, rest, new_acc}
+    end
   end
 
   defp strip_acc({code, return_value, _acc}), do: {code, return_value}
@@ -161,8 +167,8 @@ defmodule Codepagex do
   Using the `use_utf_replacement` function to handle invalid bytes:
 
       iex> iso = "Hello æøå!" |> from_string!(:iso_8859_1)
-      iex> to_string!(iso, :ascii, &use_utf_replacement/2)
-      "Hello ���!"
+      iex> to_string(iso, :ascii, &use_utf_replacement/2)
+      {:ok, "Hello ���!", 3}
 
   In this example, we replace missing chars with "#" and then count the number
   of replacements done.
@@ -214,9 +220,9 @@ defmodule Codepagex do
   Convert a binary in a specified encoding into an Elixir string in utf-8
   encoding. May raise an exception.
 
-  Compared to `to_string/4`, this function has a function parameter to handle
+  Compared to `to_string!/2`, this function has a function parameter to handle
   any bytes that are not supported by the encoding format. Depending on the
-  supplied function, the function may or may not return an error.
+  supplied function, the function may or may raise an exception.
 
   The function `use_utf_replacement/2` may be used a a parameter if you want
   to make sure the conversion succeeds even if the binary contains invalid
@@ -224,16 +230,17 @@ defmodule Codepagex do
 
   The function `missing_fun` must receive two arguments, the first being a
   binary containing the rest of the `binary` parameter that is still
-  unprocessed. The second is the accumultor `acc`. it must return:
+  unprocessed. The second is the accumultor `acc`. It must return:
 
   - `{:ok, replacement, new_rest, new_acc}` to continue processing
   - `{:error, reason, new_acc}` to return an error from `to_string/4`
 
   The `acc` parameter is passed to the `missing_fun` every time it is called,
-  and updated according to the return value of `missing_fun`. In the end it is
-  returned in the return value of `to_string/4`. The accumulator is useful if
-  you need to keep track of a state in the string, for example left-right mode
-  or the number of replacements done. In some cases it may be ignored.
+  and updated according to the return value of `missing_fun`. The accumulator
+  is useful if you need to keep track of a state in the string, for example
+  left-right mode or the number of replacements done. In some cases it may be
+  ignored. If you need to return the last `acc` value you must use
+  `to_string/4`
 
 
   ## Examples
@@ -244,17 +251,14 @@ defmodule Codepagex do
       iex> to_string!(iso, :ascii, &use_utf_replacement/2)
       "Hello ���!"
 
-  In this example, we replace missing chars with "#" and then count the number
-  of replacements done.
+  In this example, we replace missing chars with "#" 
 
       iex> iso = "Hello æøå!" |> from_string!(:iso_8859_1)
-      iex> f = fn <<_, rest :: binary>>, acc ->
-      ...>                {:ok, "#", rest, acc + 1}
+      iex> f = fn <<_, rest :: binary>>, _acc ->
+      ...>                {:ok, "#", rest, nil}
       ...> end
-      iex> to_string(iso, :ascii, f, 0)
-      {:ok, "Hello ###!", 3}
-  
-  TODO
+      iex> to_string!(iso, :ascii, f)
+      "Hello ###!"
   """
   def to_string!(binary, encoding, missing_fun, acc \\ nil) do
     case to_string(binary, encoding, missing_fun, acc) do
