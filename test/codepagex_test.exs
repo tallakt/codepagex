@@ -44,7 +44,7 @@ defmodule CodepagexTest do
   end
 
   test "to_string! should fail for ETSI/GSM0338 undefined character" do
-    assert_raise RuntimeError, fn ->
+    assert_raise Codepagex.Error, fn ->
       Codepagex.to_string!(<<128>>, "ETSI/GSM0338")
     end
   end
@@ -81,7 +81,7 @@ defmodule CodepagexTest do
   end
 
   test "from_string! should raise exception for undefined character" do
-    assert_raise RuntimeError, fn ->
+    assert_raise Codepagex.Error, fn ->
       Codepagex.from_string!("൨", "ETSI/GSM0338")
     end
   end
@@ -103,7 +103,7 @@ defmodule CodepagexTest do
   end
 
   test "translate! raises exception on failure" do
-    assert_raise RuntimeError, fn ->
+    assert_raise Codepagex.Error, fn ->
       Codepagex.translate!("൨", :iso_8859_1, "ETSI/GSM0338")
     end
   end

@@ -32,7 +32,7 @@ defmodule Codepagex.Mappings.Helpers do
       end
 
       def unquote(fn_name)(rest, acc, missing_fun, outer_acc) do
-        case missing_fun.(rest, acc) do
+        case missing_fun.(rest, outer_acc) do
           res = {:error, _, _} ->
             res
           {:ok, added_string, new_rest, new_outer_acc} ->
@@ -66,7 +66,7 @@ defmodule Codepagex.Mappings.Helpers do
       end
 
       def unquote(fn_name)(rest, acc, missing_fun, outer_acc) do
-        case missing_fun.(rest, acc) do
+        case missing_fun.(rest, outer_acc) do
           res = {:error, _, _} ->
             res
           {:ok, added_binary, new_rest, new_outer_acc} ->
