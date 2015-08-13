@@ -48,12 +48,11 @@ iex> Codepagex.from_string! "Hello æøåÆØÅ!", :iso_8859_1
 <<72, 101, 108, 108, 111, 32, 230, 248, 229, 198, 216, 197, 33>>
 ```
 
-## Remaining work
+## Missing pieces
 
 - A few encodings are not yet supported for different reasons
 - Optimize lookup so that a range with equal offset may be treated in one 
   pattern match
-- Supply a function to deal with undefined characters
-- select encodings in mix.exs
-- a bunch of warnings about shadowed parameters durin compilation
-- add specs
+- Select encodings in mix.exs
+- A bunch of warnings about shadowed parameters durin compilation
+- No specs

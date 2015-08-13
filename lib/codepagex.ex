@@ -287,15 +287,57 @@ defmodule Codepagex do
   end
 
   @doc """
-  TODO
-  """
-    def from_string(string, encoding, missing_fun, acc \\ nil)
+  Convert a string to a binary with a given encoding. A function is passed to
+  handle codepoints that are not possible to encode properly.
 
-    # aliases are forwarded to proper name
-    for {aliaz, encoding} <- @alias_table do
-      def from_string(string, unquote(aliaz), missing_fun, acc) do
-      Codepagex.Mappings.from_string(
-        string, unquote(encoding |> String.to_atom), missing_fun, acc)
+  Encoding must be a string or atom as returned by `aliases/0` or
+  `encoding_list/0`. 
+
+  If you want to replace all impossible codepoints to a certain character, use
+  the function `replace_nonexistent/1`.
+
+  The function parameter `missing_fun` must receive two arguments, the first
+  being a string containing the rest of the `string` parameter that is still
+  unprocessed. The second is the accumultor `acc`. `acc` is used to preserve
+  state between invocations of `missing_fun`. It must return:
+
+  - `{:ok, replacement, new_rest, new_acc}` to continue processing
+  - `{:error, reason, new_acc}` to return an error from `to_string/4`
+
+  The `replacement` value is inserted into the result binary, and must be in
+  the encoding of the result. Processing will continue with `rest`. `acc` is
+  passed to the nect invocation of `missing_fun`, or returned by
+  `from_string/4`.
+
+  The accumulator is useful if you need to keep track of a state in the string,
+  for example left-right mode or the number of replacements done. In some cases
+  it may be ignored. 
+
+  See also `from_string!/4`
+
+  ## Examples
+
+  Using the `replace_nonexistent/1` function to handle invalid bytes:
+
+      iex> f = "_" |> to_string!(:ascii) |> replace_nonexistent
+      iex> from_string("Hello æøå!", :ascii, f)
+      {:ok, "Hello ___!", 3}
+
+  In this example, we replace missing chars with "#", and return the number of
+  replacements made:
+
+      iex> f = fn <<_::utf8, rest::binary>>, acc -> {:ok, "#", rest, acc + 1} end
+      iex> from_string("Hello æøå!", :ascii, f, 0)
+      {:ok, "Hello ###!", 3}
+
+  """
+  def from_string(string, encoding, missing_fun, acc \\ nil)
+
+  # aliases are forwarded to proper name
+  for {aliaz, encoding} <- @alias_table do
+    def from_string(string, unquote(aliaz), missing_fun, acc) do
+    Codepagex.Mappings.from_string(
+      string, unquote(encoding |> String.to_atom), missing_fun, acc)
     end
   end
 
@@ -331,7 +373,49 @@ defmodule Codepagex do
   end
 
   @doc """
-  todo
+  Convert a string to a binary with a given encoding. A function is passed to
+  handle codepoints that are not possible to encode properly.
+
+  Encoding must be a string or atom as returned by `aliases/0` or
+  `encoding_list/0`. 
+
+  If you want to replace all impossible codepoints to a certain character, use
+  the function `replace_nonexistent/1`.
+
+  The function parameter `missing_fun` must receive two arguments, the first
+  being a string containing the rest of the `string` parameter that is still
+  unprocessed. The second is the accumultor `acc`. `acc` is used to preserve
+  state between invocations of `missing_fun`. It must return:
+
+  - `{:ok, replacement, new_rest, new_acc}` to continue processing
+  - `{:error, reason, new_acc}` to return an error from `to_string/4`
+
+  The `replacement` value is inserted into the result binary, and must be in
+  the encoding of the result. Processing will continue with `rest`. `acc` is
+  passed to the next invocation of `missing_fun`, or returned by
+  `from_string/4`.
+
+  The accumulator is useful if you need to keep track of a state in the string,
+  for example left-right mode or the number of replacements done. In some cases
+  it may be ignored. 
+
+  See also `from_string/4`
+
+  ## Examples
+
+  Using the `replace_nonexistent/1` function to handle invalid bytes:
+
+      iex> f = "_" |> to_string!(:ascii) |> replace_nonexistent
+      iex> from_string!("Hello æøå!", :ascii, f)
+      "Hello ___!"
+
+  In this example, we replace missing chars with "#", and return the number of
+  replacements made:
+
+      iex> f = fn <<_::utf8, rest::binary>>, acc -> {:ok, "#", rest, acc + 1} end
+      iex> from_string!("Hello æøå!", :ascii, f, 0)
+      "Hello ###!"
+
   """
   def from_string!(string, encoding, missing_fun, acc \\ nil) do
     case from_string(string, encoding, missing_fun, acc) do
