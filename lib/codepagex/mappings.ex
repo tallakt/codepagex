@@ -97,6 +97,10 @@ defmodule Codepagex.Mappings do
     |> Enum.reject(&(String.match?(&1, ~r[MISC/IBMGRAPH]i))) # seems useless, other format
     |> Enum.reject(&(String.match?(&1, ~r[VENDORS/MICSFT/WINDOWS/CP9]i))) # large
     |> Enum.reject(&(String.match?(&1, ~r[VENDORS/MISC/KPS9566]i))) # large
+    |> Enum.reject(&(String.match?(&1, ~r[VENDORS/MISC/APL-ISO-IR-68]i))) # generates warnings
+    |> Enum.reject(&(String.match?(&1, ~r[VENDORS/MISC/CP1006]i))) # generates warning
+    |> Enum.reject(&(String.match?(&1, ~r[NEXT]i))) # generates warning
+    |> Enum.reject(&(String.match?(&1, ~r[EBCDIC/CP875]i))) # generates warning
     )
   @names_files for n <- @mapping_files, do: {Helpers.name_for_file(n), n}, into: %{}
   @names @names_files |> Dict.keys |> Enum.sort
