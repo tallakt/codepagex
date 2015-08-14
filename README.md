@@ -10,8 +10,8 @@ iconv, but written in pure Elixir.
 All the encodings are fetched from unicode.org tables and conversion functions
 are generated from these.
 
-Note that all unicode mapping files are processed during compilation, to that
-part is slightly time consuming.
+Note that all unicode mapping files are processed during compilation, adding to
+compilation time.
 
 _Demo quality_
 
@@ -54,5 +54,4 @@ iex> Codepagex.from_string! "Hello æøåÆØÅ!", :iso_8859_1
 - Optimize lookup so that a range with equal offset may be treated in one 
   pattern match
 - Select encodings in mix.exs
-- A bunch of warnings about shadowed parameters durin compilation
 - No specs
