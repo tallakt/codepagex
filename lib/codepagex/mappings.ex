@@ -76,6 +76,21 @@ defmodule Codepagex.Mappings.Helpers do
       end
     end
   end
+
+  defp name_matches_filter(name, filter) when is_list(filter) do
+    Enum.any?(filter, fn f ->
+      if Regex.regex? f do
+        Regex.match? f, name
+      else
+        name == to_string(f)
+      end
+    end)
+  end
+
+  def filter_to_selected_encodings(all_names, filters) do
+    all_names
+    |> Enum.filter(fn {k, _} -> name_matches_filter(k, filters) end)
+  end
 end
 
 defmodule Codepagex.Mappings do
@@ -84,11 +99,9 @@ defmodule Codepagex.Mappings do
   require Codepagex.Mappings.Helpers
   alias Codepagex.Mappings.Helpers
 
-  # A lot of encoding are left out as they have unsupported codepoints
-  # dealing with left-right and double utf codepoints, and other rules that are
-  # decribed in the files
   @mapping_folder Path.join([__DIR__] ++ ~w(.. .. unicode))
-  @mapping_files (
+
+  @all_mapping_files (
     @mapping_folder
     |> Path.join(Path.join(~w(** *.TXT)))
     |> Path.wildcard
@@ -102,20 +115,32 @@ defmodule Codepagex.Mappings do
     |> Enum.reject(&(String.match?(&1, ~r[NEXT]i))) # generates warning
     |> Enum.reject(&(String.match?(&1, ~r[EBCDIC/CP875]i))) # generates warning
     )
-  @names_files for n <- @mapping_files, do: {Helpers.name_for_file(n), n}, into: %{}
-  @names @names_files |> Dict.keys |> Enum.sort
+
+  @all_names_files (for n <- @all_mapping_files,
+      do: {Helpers.name_for_file(n), n}, into: %{})
+
+  @filtered_names_files (
+    Helpers.filter_to_selected_encodings(
+      @all_names_files, 
+      Application.get_env(:codepagex, :encodings)
+      )
+    )
+
+
+  # These are documented in Codepagex.encoding_list/1
+  def encoding_list(selection \\ :configured)
+  def encoding_list(:all), do: @all_names_files |> Dict.keys |> Enum.sort
+  def encoding_list(:configured), do: @filtered_names_files |> Dict.keys |> Enum.sort
 
   # load mapping files
-  @encodings (for {name, file} <- @names_files, 
+  @encodings (for {name, file} <- @filtered_names_files, 
               do: {name, Codepagex.MappingFile.load(file)})
-
-  def encoding_list, do: @names
 
   # define the to_string_xxx for each mapping
   for {n, m} <- @encodings, do: Helpers.def_to_string(n, m)
 
   # define methods to forward to_string(mapping, binary) to a specific implementation
-  for name <- @names do
+  for {name, _} <- @encodings do
     fun_name = Helpers.function_name_for_mapping_name("to_string", name)
     def to_string(binary, unquote(name |> String.to_atom), missing_fun, acc) do
       unquote(fun_name)(binary, [], missing_fun, acc)
@@ -130,7 +155,7 @@ defmodule Codepagex.Mappings do
   for {n, m} <- @encodings, do: Helpers.def_from_string(n, m)
 
   # define methods to forward from_string(encoding, binary) to a specific implementation
-  for name <- @names do
+  for {name, _} <- @encodings do
     fun_name = Helpers.function_name_for_mapping_name("from_string", name)
     def from_string(string, unquote(name |> String.to_atom), missing_fun, acc) do
       unquote(fun_name)(string, [], missing_fun, acc)

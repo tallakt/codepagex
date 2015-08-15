@@ -13,10 +13,16 @@ defmodule Codepagex do
   # aliases
   @iso_aliases for n <- 1..16, do: {:"iso_8859_#{n}", "ISO8859/8859-#{n}"}
   @ascii_alias [{:ascii, "VENDORS/MISC/US-ASCII-QUOTES"}]
-  @alias_table (@iso_aliases ++ @ascii_alias) |> Enum.into %{}
+  @full_alias_table (@iso_aliases ++ @ascii_alias) |> Enum.into %{}
+  @filtered_alias_table (
+    @full_alias_table
+    |> Enum.filter(fn {_, e} ->
+        Enum.member?(Codepagex.Mappings.encoding_list(:configured), e)
+      end)
+    )
 
   @aliases_markdown (
-    @alias_table
+    @full_alias_table
     |> Enum.map(fn {a, m} -> "  - #{inspect(a) |> String.ljust(15)} => #{m}" end)
     |> Enum.join("\n")
     )
@@ -26,26 +32,39 @@ defmodule Codepagex do
   of the encoding. For a full list of encodings, see `encoding_list/0`
 
   The available aliases are: #{"\n\n" <> @aliases_markdown}
+
+  Some of these may not be available depending on mix configuration. If the
+  `selection` parameter is `:all` then all possible aliases are listed,
+  otherwise, the available aliases are listed
   """
-  def aliases, do: @alias_table
+  def aliases(selection \\ nil)
+  def aliases(:all), do: @full_alias_table
+  def aliases(nil), do: @filtered_alias_table
 
   @encodings_markdown (
-    Codepagex.Mappings.encoding_list
+    Codepagex.Mappings.encoding_list(:configured)
     |> Enum.map(fn m -> "  - #{m}" end)
     |> Enum.join("\n")
     )
 
-  @encodings_atom Codepagex.Mappings.encoding_list |> Enum.map(&String.to_atom/1)
+  @encodings_atom (
+    Codepagex.Mappings.encoding_list(:configured)
+    |> Enum.map(&String.to_atom/1)
+    )
 
   @doc """
   Returns a list of the supported encodings. These are extracted from 
   http://unicode.org/ and the names correspond to a encoding file on that page
 
-  For a list of shorthand names, see `aliases/0`
+  For a list of shorthand names, see `aliases/1`
 
   The available encodings are: #{"\n\n" <> @encodings_markdown}
+
+  Depending on the mix configuration, some of these encodings may not be
+  selected.
   """
-  def encoding_list, do: Codepagex.Mappings.encoding_list
+  def encoding_list(selection \\ :configured)
+  def encoding_list(selection), do: Codepagex.Mappings.encoding_list(selection)
 
   # This is the default missing_fun
   defp error_on_missing(_, _) do
@@ -184,7 +203,7 @@ defmodule Codepagex do
   def to_string(binary, encoding, missing_fun, acc \\ nil)
 
   # create a forwarding to_string implementation for each alias
-  for {aliaz, encoding} <- @alias_table do
+  for {aliaz, encoding} <- @filtered_alias_table do
     def to_string(binary, unquote(aliaz), missing_fun, acc) do
       to_string(binary, unquote(encoding |> String.to_atom), missing_fun, acc)
     end
@@ -334,7 +353,7 @@ defmodule Codepagex do
   def from_string(string, encoding, missing_fun, acc \\ nil)
 
   # aliases are forwarded to proper name
-  for {aliaz, encoding} <- @alias_table do
+  for {aliaz, encoding} <- @filtered_alias_table do
     def from_string(string, unquote(aliaz), missing_fun, acc) do
     Codepagex.Mappings.from_string(
       string, unquote(encoding |> String.to_atom), missing_fun, acc)
