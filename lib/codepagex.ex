@@ -1,28 +1,14 @@
 defmodule Codepagex do
+  require Codepagex.Mappings
+
+  alias Codepagex.Mappings
+
+  @moduledoc File.read!("README.md")
   @moduledoc """
-  Codepagex is a pure Elixir module to provide conversion between text in 
-  different codepages to and from Elixir strings in utf-8 format.
-
-  A list of supported encodings is emmitted by `encoding_list/0`, a list of 
-  shorthand aliases by `aliases/0`.
-
-  For conversion use the functions `to_string/2`, `from_string/2` and
-  `translate/3`.
   """
 
-  # aliases
-  @iso_aliases for n <- 1..16, do: {:"iso_8859_#{n}", "ISO8859/8859-#{n}"}
-  @ascii_alias [{:ascii, "VENDORS/MISC/US-ASCII-QUOTES"}]
-  @full_alias_table (@iso_aliases ++ @ascii_alias) |> Enum.into %{}
-  @filtered_alias_table (
-    @full_alias_table
-    |> Enum.filter(fn {_, e} ->
-        Enum.member?(Codepagex.Mappings.encoding_list(:configured), e)
-      end)
-    )
-
   @aliases_markdown (
-    @full_alias_table
+    Mappings.aliases
     |> Enum.map(fn {a, m} -> "  - #{inspect(a) |> String.ljust(15)} => #{m}" end)
     |> Enum.join("\n")
     )
@@ -38,17 +24,17 @@ defmodule Codepagex do
   otherwise, the available aliases are listed
   """
   def aliases(selection \\ nil)
-  def aliases(:all), do: @full_alias_table
-  def aliases(nil), do: @filtered_alias_table
+  defdelegate aliases(selection), to: Mappings
+
 
   @encodings_markdown (
-    Codepagex.Mappings.encoding_list(:configured)
+    Mappings.encoding_list(:configured)
     |> Enum.map(fn m -> "  - #{m}" end)
     |> Enum.join("\n")
     )
 
   @encodings_atom (
-    Codepagex.Mappings.encoding_list(:configured)
+    Mappings.encoding_list(:configured)
     |> Enum.map(&String.to_atom/1)
     )
 
@@ -64,7 +50,7 @@ defmodule Codepagex do
   selected.
   """
   def encoding_list(selection \\ :configured)
-  def encoding_list(selection), do: Codepagex.Mappings.encoding_list(selection)
+  def encoding_list(selection), do: Mappings.encoding_list(selection)
 
   # This is the default missing_fun
   defp error_on_missing(_, _) do
@@ -203,14 +189,14 @@ defmodule Codepagex do
   def to_string(binary, encoding, missing_fun, acc \\ nil)
 
   # create a forwarding to_string implementation for each alias
-  for {aliaz, encoding} <- @filtered_alias_table do
+  for {aliaz, encoding} <- Mappings.aliases do
     def to_string(binary, unquote(aliaz), missing_fun, acc) do
       to_string(binary, unquote(encoding |> String.to_atom), missing_fun, acc)
     end
   end
 
   def to_string(binary, encoding, missing_fun, acc) when is_atom(encoding) do
-    Codepagex.Mappings.to_string(binary, encoding, missing_fun, acc)
+    Mappings.to_string(binary, encoding, missing_fun, acc)
   end
 
   def to_string(binary, encoding, missing_fun, acc) when is_binary(encoding) do
@@ -353,15 +339,15 @@ defmodule Codepagex do
   def from_string(string, encoding, missing_fun, acc \\ nil)
 
   # aliases are forwarded to proper name
-  for {aliaz, encoding} <- @filtered_alias_table do
+  for {aliaz, encoding} <- Mappings.aliases do
     def from_string(string, unquote(aliaz), missing_fun, acc) do
-    Codepagex.Mappings.from_string(
+    Mappings.from_string(
       string, unquote(encoding |> String.to_atom), missing_fun, acc)
     end
   end
 
   def from_string(string, encoding, missing_fun, acc) when is_atom(encoding) do
-    Codepagex.Mappings.from_string(string, encoding, missing_fun, acc)
+    Mappings.from_string(string, encoding, missing_fun, acc)
   end
 
   def from_string(string, encoding, missing_fun, acc) when is_binary(encoding) do

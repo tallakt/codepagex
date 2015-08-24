@@ -7,7 +7,11 @@ defmodule CodepagexTest do
 
   test "encoding_list should return some existing values" do
     assert "ETSI/GSM0338" in Codepagex.encoding_list
-    assert "VENDORS/MICSFT/PC/CP852" in Codepagex.encoding_list
+    assert "ISO8859/8859-14" in Codepagex.encoding_list
+  end
+
+  test "only include encodings from mix env" do
+    refute "VENDORS/MICSFT/PC/CP852" in Codepagex.encoding_list
   end
 
   test "aliases should contain come aliases" do

@@ -77,19 +77,24 @@ defmodule Codepagex.Mappings.Helpers do
     end
   end
 
-  defp name_matches_filter(name, filter) when is_list(filter) do
-    Enum.any?(filter, fn f ->
-      if Regex.regex? f do
-        Regex.match? f, name
-      else
-        name == to_string(f)
-      end
-    end)
+  defp name_matches?(name, filter) do
+    if Regex.regex? filter do
+      Regex.match? filter, name
+    else
+      name == to_string(filter)
+    end
   end
 
-  def filter_to_selected_encodings(all_names, filters) do
-    all_names
-    |> Enum.filter(fn {k, _} -> name_matches_filter(k, filters) end)
+  def filter_to_selected_encodings(names, filters, aliases) do
+    matching = 
+      for n = {k,_} <- names,
+          f <- Enum.map(filters, &(Dict.get aliases, &1, &1)),
+          name_matches?(k, f),
+          do: n
+
+    matching
+    |> Enum.sort
+    |> Enum.uniq
   end
 end
 
@@ -99,6 +104,25 @@ defmodule Codepagex.Mappings do
   require Codepagex.Mappings.Helpers
   alias Codepagex.Mappings.Helpers
 
+  # aliases
+  @iso_aliases for n <- 1..16, do: {:"iso_8859_#{n}", "ISO8859/8859-#{n}"}
+  @ascii_alias [{:ascii, "VENDORS/MISC/US-ASCII-QUOTES"}]
+  @all_aliases (@iso_aliases ++ @ascii_alias) |> Enum.into %{}
+
+
+  def aliases(selection \\ nil)
+
+  def aliases(:all), do: @all_aliases
+
+  def aliases(nil) do
+    aliases(:all)
+    |> Enum.filter(fn {_, e} ->
+        Enum.member?(Codepagex.Mappings.encoding_list(:configured), e)
+      end)
+    |> Enum.into(%{})
+  end
+
+  # folders containing mapping files
   @mapping_folder Path.join([__DIR__] ++ ~w(.. .. unicode))
 
   @all_mapping_files (
@@ -122,7 +146,8 @@ defmodule Codepagex.Mappings do
   @filtered_names_files (
     Helpers.filter_to_selected_encodings(
       @all_names_files, 
-      Application.get_env(:codepagex, :encodings)
+      Application.get_env(:codepagex, :encodings),
+      @all_aliases
       )
     )
 
