@@ -3,9 +3,9 @@ defmodule Codepagex.Mixfile do
 
   def project do
     [app: :codepagex,
-     version: "0.0.3",
+     version: "0.0.4",
      elixir: "~> 1.0",
-     name: "codepagex",
+     name: "Codepagex",
      source_url: "https://github.com/tallakt/codepagex",
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
