@@ -2,6 +2,7 @@ Codepagex
 =========
 
 [![Build Status](https://travis-ci.org/tallakt/codepagex.svg)](https://travis-ci.org/tallakt/codepagex)
+[![Documentation Status](https://inch-ci.org/github/tallakt/codepagex#)](https://inch-ci.org/github/tallakt/codepagex#)
 
 Codepagex is an  elixir library to convert between string encodings to and from
 utf-8. Like iconv, but written in pure Elixir.

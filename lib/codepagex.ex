@@ -7,7 +7,7 @@ defmodule Codepagex do
   @moduledoc (
     File.read!("README.md")
     |> String.split("\n") 
-    |> Enum.reject(&(String.match?(&1, ~r/```/)))
+    |> Enum.reject(&(String.match?(&1, ~r/```|Build Status|Documentation Status/)))
     |> Enum.join("\n")
     )
 
