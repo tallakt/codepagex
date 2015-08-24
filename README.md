@@ -98,3 +98,4 @@ The encodings that are known to require very long compile times are:
 - Optimize lookup so that a range with equal offset may be treated in one 
   pattern match
 - Elixir function specs
+

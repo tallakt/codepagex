@@ -124,6 +124,8 @@ defmodule Codepagex.Mappings do
 
   # folders containing mapping files
   @mapping_folder Path.join([__DIR__] ++ ~w(.. .. unicode))
+  @default_mapping_filter [:ascii, ~r[iso8859]i]
+
 
   @all_mapping_files (
     @mapping_folder
@@ -144,7 +146,7 @@ defmodule Codepagex.Mappings do
   @filtered_names_files (
     Helpers.filter_to_selected_encodings(
       @all_names_files, 
-      Application.get_env(:codepagex, :encodings),
+      Application.get_env(:codepagex, :encodings, @default_mapping_filter),
       @all_aliases
       )
     )
