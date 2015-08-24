@@ -14,6 +14,7 @@ are generated from these at compile time.
 
 The package is assumed to be interfaced using only the `Codepagex` module.
 
+```elixir
     iex> from_string("æøåÆØÅ", :iso_8859_1)
     {:ok, <<230, 248, 229, 198, 216, 197>>}
 
@@ -25,11 +26,13 @@ The package is assumed to be interfaced using only the `Codepagex` module.
 
     iex> to_string!(<<230, 248, 229, 198, 216, 197>>, :iso_8859_1)
     "æøåÆØÅ"
+```
 
 When there are invalid byte sequences in a String or encoded binary, the
 functions will not succeed. If you still want to handle these strings, you may
 specify a function to handle these circumstances. Eg:
 
+```elixir
     iex> missing_fun = replace_nonexistent("_") # returns anon function
     iex> from_string("Hello æøå!", :ascii, missing_fun)
     {:ok, "Hello ___!", 3}
@@ -37,6 +40,7 @@ specify a function to handle these circumstances. Eg:
     iex> iso = "Hello æøå!" |> from_string!(:iso_8859_1)
     iex> to_string!(iso, :ascii, &use_utf_replacement/2)
     "Hello ���!"
+```
 
 ## Encodings
 
@@ -45,17 +49,21 @@ A full list of encodings is found by running `encoding_list/1`.
 The encodings are best supplied as an atom, or else the string is converted to
 atom for you (but with a somewhat less efficient function lookup). Eg:
 
+```elixir
     iex> from_string("æøå", "ISO8859/8859-9")
     {:ok, <<230, 248, 229>>}
 
     iex> from_string("æøå", :"ISO8859/8859-9")
     {:ok, <<230, 248, 229>>}
+```
 
 For some encodings, an alias is set up for easier dispatch. The list of aliases
 is found by running `aliases/1`. The code looks like: 
 
+```elixir
     iex> from_string!("Hello æøåÆØÅ!", :iso_8859_1)
     <<72, 101, 108, 108, 111, 32, 230, 248, 229, 198, 216, 197, 33>>
+```
 
 ## Encoding selection
 
@@ -67,14 +75,17 @@ times, in particular for the largest ones.
 To specify the encodings to use, add the following lines to your
 `config/config.exs` and recompile:
 
+```elixir
     use Mix.Config
     config :codepagex, :encodings, [:ascii]
+```
 
 This will add only the ASCII encoding, as specified by it's shorthand alias.
 Any number of encodings may be specified like this in the list. The list may
 contain strings, atoms or regular expressions that match either an alias or a
 full encoding name, eg:
 
+```elixir
     use Mix.Config
     config :codepagex, :encodings, [
       :ascii,           # by alias name
@@ -82,6 +93,7 @@ full encoding name, eg:
       "ETSI/GSM0338",   # by the full name as a string
       :"MISC/CP856"     # by a full name as an atom
     ]
+```
 
 The encodings that are known to require very long compile times are:
 

@@ -3,7 +3,13 @@ defmodule Codepagex do
 
   alias Codepagex.Mappings
 
-  @moduledoc File.read!("README.md")
+  # unfortunately exdoc doesnt support ``` fenced blocks
+  @moduledoc (
+    File.read!("README.md")
+    |> String.split("\n") 
+    |> Enum.reject(&(String.match?(&1, ~r/```/)))
+    |> Enum.join("\n")
+    )
 
   @aliases_markdown (
     Mappings.aliases(:all)
