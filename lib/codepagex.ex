@@ -4,37 +4,45 @@ defmodule Codepagex do
   alias Codepagex.Mappings
 
   @moduledoc File.read!("README.md")
-  @moduledoc """
-  """
 
   @aliases_markdown (
-    Mappings.aliases
-    |> Enum.map(fn {a, m} -> "  - #{inspect(a) |> String.ljust(15)} => #{m}" end)
+    Mappings.aliases(:all)
+    |> Enum.map(fn {a, m} -> "  | #{inspect(a) |> String.ljust(15)} | #{m} |" end)
     |> Enum.join("\n")
     )
 
   @doc """
   Returns a list of shorthand aliases that may be used instead of the full name
-  of the encoding. For a full list of encodings, see `encoding_list/0`
+  of the encoding. 
 
-  The available aliases are: #{"\n\n" <> @aliases_markdown}
+  The available aliases are:
+
+  | Alias | Full name |
+  |------:|:----------|
+  #{@aliases_markdown}
 
   Some of these may not be available depending on mix configuration. If the
   `selection` parameter is `:all` then all possible aliases are listed,
-  otherwise, the available aliases are listed
+  otherwise, only the available aliases are listed
+
+  For a full list of encodings, see `encoding_list/1`
   """
   def aliases(selection \\ nil)
   defdelegate aliases(selection), to: Mappings
 
 
   @encodings_markdown (
-    Mappings.encoding_list(:configured)
-    |> Enum.map(fn m -> "  - #{m}" end)
+    # format as table with 3 columns
+    Mappings.encoding_list(:all)
+    |> Enum.map(&(String.ljust(&1, 30)))
+    |> Enum.chunk(3, 3, ["", ""])
+    |> Enum.map(&(Enum.join(&1, " | ")))
+    |> Enum.map(&("| #{&1} |"))
     |> Enum.join("\n")
     )
 
   @encodings_atom (
-    Mappings.encoding_list(:configured)
+    Mappings.encoding_list(:all)
     |> Enum.map(&String.to_atom/1)
     )
 
@@ -42,15 +50,22 @@ defmodule Codepagex do
   Returns a list of the supported encodings. These are extracted from 
   http://unicode.org/ and the names correspond to a encoding file on that page
 
+
+  `encoding_list/1` is normally called without any parameters to list the
+  encodings that are currently configured during compilation. To see all
+  available options, even those unavailable, use `encoding_list(:all)`
+
+  The available encodings are: 
+  
+  #{@encodings_markdown}
+
+  For more information about configuring encodings, refer to `Codepagex`.
+
   For a list of shorthand names, see `aliases/1`
 
-  The available encodings are: #{"\n\n" <> @encodings_markdown}
-
-  Depending on the mix configuration, some of these encodings may not be
-  selected.
   """
-  def encoding_list(selection \\ :configured)
-  def encoding_list(selection), do: Mappings.encoding_list(selection)
+  def encoding_list(selection \\ nil)
+  defdelegate encoding_list(selection), to: Mappings
 
   # This is the default missing_fun
   defp error_on_missing(_, _) do
@@ -278,6 +293,9 @@ defmodule Codepagex do
   Converts an Elixir string in utf-8 encoding to a binary in another encoding.
 
       iex> from_string("HÉ¦¦Ó", :iso_8859_1)
+      {:ok, <<72, 201, 166, 166, 211>>}
+
+      iex> from_string("HÉ¦¦Ó", :"ISO8859/8859-1") # without alias
       {:ok, <<72, 201, 166, 166, 211>>}
 
       iex> from_string("ʒ", :iso_8859_1)

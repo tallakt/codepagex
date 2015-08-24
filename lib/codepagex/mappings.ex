@@ -114,7 +114,7 @@ defmodule Codepagex.Mappings do
 
   def aliases(:all), do: @all_aliases
 
-  def aliases(nil) do
+  def aliases(_) do
     aliases(:all)
     |> Enum.filter(fn {_, e} ->
         Enum.member?(Codepagex.Mappings.encoding_list(:configured), e)
@@ -132,8 +132,6 @@ defmodule Codepagex.Mappings do
     |> Enum.reject(&(String.match?(&1, ~r[README]i)))
     |> Enum.reject(&(String.match?(&1, ~r[VENDORS/APPLE]i))) # lots of weird stuff
     |> Enum.reject(&(String.match?(&1, ~r[MISC/IBMGRAPH]i))) # seems useless, other format
-    |> Enum.reject(&(String.match?(&1, ~r[VENDORS/MICSFT/WINDOWS/CP9]i))) # large
-    |> Enum.reject(&(String.match?(&1, ~r[VENDORS/MISC/KPS9566]i))) # large
     |> Enum.reject(&(String.match?(&1, ~r[VENDORS/MISC/APL-ISO-IR-68]i))) # generates warnings
     |> Enum.reject(&(String.match?(&1, ~r[VENDORS/MISC/CP1006]i))) # generates warning
     |> Enum.reject(&(String.match?(&1, ~r[NEXT]i))) # generates warning
@@ -153,9 +151,9 @@ defmodule Codepagex.Mappings do
 
 
   # These are documented in Codepagex.encoding_list/1
-  def encoding_list(selection \\ :configured)
+  def encoding_list(selection \\ nil)
   def encoding_list(:all), do: @all_names_files |> Dict.keys |> Enum.sort
-  def encoding_list(:configured), do: @filtered_names_files |> Dict.keys |> Enum.sort
+  def encoding_list(_), do: @filtered_names_files |> Dict.keys |> Enum.sort
 
   # load mapping files
   @encodings (for {name, file} <- @filtered_names_files, 
