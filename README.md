@@ -34,12 +34,11 @@ functions will not succeed. If you still want to handle these strings, you may
 specify a function to handle these circumstances. Eg:
 
 ```elixir
-    iex> missing_fun = replace_nonexistent("_") # returns anon function
-    iex> from_string("Hello æøå!", :ascii, missing_fun)
+    iex> from_string("Hello æøå!", :ascii, replace_nonexistent("_"))
     {:ok, "Hello ___!", 3}
 
     iex> iso = "Hello æøå!" |> from_string!(:iso_8859_1)
-    iex> to_string!(iso, :ascii, &use_utf_replacement/2)
+    iex> to_string!(iso, :ascii, use_utf_replacement)
     "Hello ���!"
 ```
 

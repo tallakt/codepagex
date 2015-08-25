@@ -56,7 +56,6 @@ defmodule Codepagex do
   Returns a list of the supported encodings. These are extracted from 
   http://unicode.org/ and the names correspond to a encoding file on that page
 
-
   `encoding_list/1` is normally called without any parameters to list the
   encodings that are currently configured during compilation. To see all
   available options, even those unavailable, use `encoding_list(:all)`
@@ -74,68 +73,85 @@ defmodule Codepagex do
   defdelegate encoding_list(selection), to: Mappings
 
   # This is the default missing_fun
-  defp error_on_missing(_, _) do
-    {:error, "Invalid bytes for encoding", nil}
+  defp error_on_missing do
+    fn _ ->
+      {:ok, fn _, _ ->
+        {:error, "Invalid bytes for encoding", nil}
+      end}
+    end
   end
 
   @doc """
-  This function may be used as a parameter to `to_string/4` such that any bytes
-  in the input binary that don't have a proper encoding are replaced with a
-  special unicode character and the function will not return an error, or an
-  exception in the case of `to_string!/4`
+  This function may be used as a parameter to `to_string/4` or `to_string!/4`
+  such that any bytes in the input binary that don't have a proper encoding are
+  replaced with a special unicode character and the function will not
+  fail.
 
-  The accumulator input `acc` of `to_string/4` may be nil or a start number,
-  which is incremented by the number of replacements made.
+  If this function is used, `to_string/4` will never return an error.
+
+  The accumulator input `acc` of `to_string/4` is incremented by the number of
+  replacements made.
 
   ## Examples
 
       iex> iso = "Hello æøå!" |> from_string!(:iso_8859_1)
-      iex> to_string!(iso, :ascii, &use_utf_replacement/2)
+      iex> to_string!(iso, :ascii, use_utf_replacement)
       "Hello ���!"
 
+      iex> iso = "Hello æøå!" |> from_string!(:iso_8859_1)
+      iex> to_string(iso, :ascii, use_utf_replacement)
+      {:ok, "Hello ���!", 3}
+
   """
-  def use_utf_replacement(<<_, rest::binary>>, acc) do
-    # � replacement character used to replace an unknown or unrepresentable
-    # character
-    new_acc = if is_integer(acc), do: acc + 1, else: 1
-    {:ok,<<0xFFFD :: utf8>>, rest, new_acc}
+  def use_utf_replacement do
+    fn _encoding ->
+      inner = 
+        fn <<_, rest::binary>>, acc ->
+          # � replacement character used to replace an unknown or unrepresentable
+          # character
+          new_acc = if is_integer(acc), do: acc + 1, else: 1
+          {:ok, <<0xFFFD :: utf8>>, rest, new_acc}
+        end
+      {:ok, inner}
+    end
   end
   
 
   @doc """
-  This function may be used in conjunction with to `from_string/4` such that
-  any character points in the input string is replaced with a supplied binary
-  if a mapping from utf-8 to the specified encoding is undefined.  Thus
-  `from_string/4` will not return an error for any input, or raise an exception
-  for `from_string/4`
-
-  The `replace_with` is a binary in the target encoding. If it
-  contains invalid bytes, the resulting binary returned by `from_string/4` will
-  also be invalid. If you need to be certain that `replace_with` is valid, it
-  may first be converted from utf-8 by `to_string/2` or similar.
-
-  This function will return as anonymous function to be passed as parameter.
+  This function may be used in conjunction with to `from_string/4` or
+  `from_string!/4`. If there are utf-8 codepoints in the source string that are
+  not possible to represent in the target encoding, they are replaced with a
+  String.
   
-  The accumulator input `acc` of `from_string/4` may be nil or a number and the
-  returned `acc` is incremented by the number og replacements made.
+  When using this function, `from_string/4` will never return an error if
+  `replace_with` converts to the target encoding without errors.
+
+  
+  The accumulator input `acc` of `from_string/4` is incremented on each
+  replacement done.
 
   ## Examples
 
       iex> from_string!("Hello æøå!", :ascii, replace_nonexistent("_"))
       "Hello ___!"
 
-  To make sure that the replacement is valid
-
-      iex> replacement = "#"
-      iex> f = replace_nonexistent(replacement |> from_string!(:ascii))
-      iex> from_string!("Hello æøå!", :ascii, f)
-      "Hello ###!"
+      iex> from_string("Hello æøå!", :ascii, replace_nonexistent("_"), 100)
+      {:ok, "Hello ___!", 103}
 
   """
   def replace_nonexistent(replace_with) do
-    fn <<_ :: utf8, rest :: binary>>, acc ->
-      new_acc = if is_integer(acc), do: acc + 1, else: 1
-      {:ok, replace_with, rest, new_acc}
+    fn encoding ->
+      case from_string(replace_with, encoding) do
+        {:ok, encoded_replace_with} ->
+          inner = 
+            fn <<_ :: utf8, rest :: binary>>, acc ->
+              new_acc = if is_integer(acc), do: acc + 1, else: 1
+              {:ok, encoded_replace_with, rest, new_acc}
+            end
+            {:ok, inner}
+        err ->
+          err
+      end
     end
   end
 
@@ -143,8 +159,13 @@ defmodule Codepagex do
 
 
   @doc """
-  Converts a binary in a given encoding to an Elixir string in utf-8 encoding.
-  The encoding encoding
+  Converts a binary in a specified encoding to an Elixir string in utf-8
+  encoding.
+
+  The encoding parameter should be in `encoding_list/0` (passed as atoms or
+  strings), or in `aliases/0`. 
+
+  ## Examples
 
       iex> to_string(<<72, 201, 166, 166, 211>>, :iso_8859_1)
       {:ok, "HÉ¦¦Ó"}
@@ -152,12 +173,9 @@ defmodule Codepagex do
       iex> to_string(<<128>>, "ETSI/GSM0338")
       {:error, "Invalid bytes for encoding"}
 
-
-  The encoding parameter should be in `encoding_list/0` or `aliases/0`. If it
-  is a full encoding name, it may be passed as an atom or string.
   """
   def to_string(binary, encoding) do
-    to_string(binary, encoding, &error_on_missing/2)
+    to_string(binary, encoding, error_on_missing)
     |> strip_acc
   end
 
@@ -166,46 +184,72 @@ defmodule Codepagex do
   Convert a binary in a specified encoding into an Elixir string in utf-8
   encoding
 
-  Compared to `to_string/2`, this function has a function parameter to handle
-  any bytes that are not supported by the encoding format. Depending on the
-  supplied function, the function may or may not return an error.
+  Compared to `to_string/2`, you may pass a `missing_fun` function parameter to
+  handle encoding errors in the `binary`.  The function `use_utf_replacement/0`
+  may be used as a default error handling machanism.
 
-  The function `use_utf_replacement/2` may be used a a parameter if you want
-  to make sure the conversion succeeds even if the binary contains invalid
-  bytes.
+  ## Implementing missing_fun
 
-  The function `missing_fun` must receive two arguments, the first being a
-  binary containing the rest of the `binary` parameter that is still
-  unprocessed. The second is the accumultor `acc`. it must return:
+  The `missing_fun` must be an anonymous function that returns a second
+  function. The outer function will receive the encoding used by `to_string/4`,
+  and must then return `{:ok, inner_function}` or `{:error, reason}`. Returning
+  `:error` will cause `to_string/4` to fail.
+
+  The returned inner function must receive two arguments. 
+
+  - a binary containing the remainder of the `binary` parameter that is still
+    unprocessed.
+  - the accumulator `acc`
+
+  The return value must be
 
   - `{:ok, replacement, new_rest, new_acc}` to continue processing
-  - `{:error, reason, new_acc}` to return an error from `to_string/4`
+  - `{:error, reason, new_acc}` to cause `to_string/4` to fail
 
-  The `acc` parameter is passed to the `missing_fun` every time it is called,
-  and updated according to the return value of `missing_fun`. In the end it is
-  returned in the return value of `to_string/4`. The accumulator is useful if
-  you need to keep track of a state in the string, for example left-right mode
-  or the number of replacements done. In some cases it may be ignored.
+  The `acc` parameter from `to_string/4` is passed between every invocation of
+  the inner function then returned by `to_string/4`. In many use cases, `acc`
+  may be ignored.
 
 
   ## Examples
 
-  Using the `use_utf_replacement` function to handle invalid bytes:
+  Using the `use_utf_replacement/0` function to handle invalid bytes:
 
       iex> iso = "Hello æøå!" |> from_string!(:iso_8859_1)
-      iex> to_string(iso, :ascii, &use_utf_replacement/2)
+      iex> to_string(iso, :ascii, use_utf_replacement)
       {:ok, "Hello ���!", 3}
 
-  In this example, we replace missing chars with "#" and then count the number
-  of replacements done.
-
       iex> iso = "Hello æøå!" |> from_string!(:iso_8859_1)
-      iex> f = fn <<_, rest :: binary>>, acc ->
-      ...>                {:ok, "#", rest, acc + 1}
-      ...> end
-      iex> to_string(iso, :ascii, f, 0)
+      iex> missing_fun =
+      ...>   fn encoding ->
+      ...>     case to_string("#", encoding) do
+      ...>       {:ok, replacement} ->
+      ...>         inner_fun = 
+      ...>           fn <<_, rest :: binary>>, acc ->
+      ...>             {:ok, replacement, rest, acc + 1}
+      ...>           end
+      ...>         {:ok, inner_fun}
+      ...>       err ->
+      ...>         err
+      ...>     end
+      ...>   end
+      iex> to_string(iso, :ascii, missing_fun, 0)
       {:ok, "Hello ###!", 3}
   
+  The previous code was included for completeness. If you know your replacement
+  is valid in the target encoding, you might as well do:
+
+      iex> iso = "Hello æøå!" |> from_string!(:iso_8859_1)
+      iex> missing_fun = 
+      ...>   fn encoding ->
+      ...>     inner_fun = 
+      ...>       fn <<_, rest :: binary>>, acc ->
+      ...>         {:ok, "#", rest, acc + 1}
+      ...>       end
+      ...>     {:ok, inner_fun}
+      ...>   end
+      iex> to_string(iso, :ascii, missing_fun, 10)
+      {:ok, "Hello ###!", 13}
   """
   def to_string(binary, encoding, missing_fun, acc \\ nil)
 
@@ -217,7 +261,12 @@ defmodule Codepagex do
   end
 
   def to_string(binary, encoding, missing_fun, acc) when is_atom(encoding) do
-    Mappings.to_string(binary, encoding, missing_fun, acc)
+    case missing_fun.(encoding) do
+      {:ok, inner_fun} ->
+        Mappings.to_string(binary, encoding, inner_fun, acc)
+      err ->
+        err
+    end
   end
 
   def to_string(binary, encoding, missing_fun, acc) when is_binary(encoding) do
@@ -230,7 +279,9 @@ defmodule Codepagex do
   end
 
   @doc """
-  This variant of `to_string/2` may raise an exception
+  Like `to_string/2` but raises exceptions on errors.
+
+  ## Examples
 
       iex> to_string!(<<72, 201, 166, 166, 211>>, :iso_8859_1)
       "HÉ¦¦Ó"
@@ -239,52 +290,18 @@ defmodule Codepagex do
       ** (Codepagex.Error) Invalid bytes for encoding
   """
   def to_string!(binary, encoding) do
-    to_string!(binary, encoding, &error_on_missing/2, nil)
+    to_string!(binary, encoding, error_on_missing, nil)
   end
 
   @doc """
-  Convert a binary in a specified encoding into an Elixir string in utf-8
-  encoding. May raise an exception.
-
-  Compared to `to_string!/2`, this function has a function parameter to handle
-  any bytes that are not supported by the encoding format. Depending on the
-  supplied function, the function may or may raise an exception.
-
-  The function `use_utf_replacement/2` may be used a a parameter if you want
-  to make sure the conversion succeeds even if the binary contains invalid
-  bytes.
-
-  The function `missing_fun` must receive two arguments, the first being a
-  binary containing the rest of the `binary` parameter that is still
-  unprocessed. The second is the accumultor `acc`. It must return:
-
-  - `{:ok, replacement, new_rest, new_acc}` to continue processing
-  - `{:error, reason, new_acc}` to return an error from `to_string/4`
-
-  The `acc` parameter is passed to the `missing_fun` every time it is called,
-  and updated according to the return value of `missing_fun`. The accumulator
-  is useful if you need to keep track of a state in the string, for example
-  left-right mode or the number of replacements done. In some cases it may be
-  ignored. If you need to return the last `acc` value you must use
-  `to_string/4`
-
+  Like `to_string/4` but raises exceptions on errors.
 
   ## Examples
 
-  Using the `use_utf_replacement` function to handle invalid bytes:
-
       iex> iso = "Hello æøå!" |> from_string!(:iso_8859_1)
-      iex> to_string!(iso, :ascii, &use_utf_replacement/2)
+      iex> to_string!(iso, :ascii, use_utf_replacement)
       "Hello ���!"
 
-  In this example, we replace missing chars with "#" 
-
-      iex> iso = "Hello æøå!" |> from_string!(:iso_8859_1)
-      iex> f = fn <<_, rest :: binary>>, _acc ->
-      ...>                {:ok, "#", rest, nil}
-      ...> end
-      iex> to_string!(iso, :ascii, f)
-      "Hello ###!"
   """
   def to_string!(binary, encoding, missing_fun, acc \\ nil) do
     case to_string(binary, encoding, missing_fun, acc) do
@@ -298,6 +315,11 @@ defmodule Codepagex do
   @doc """
   Converts an Elixir string in utf-8 encoding to a binary in another encoding.
 
+  The `encoding` parameter should be in `encoding_list/0` as an atom or String,
+  or in `aliases/0`.
+
+  ## Examples
+
       iex> from_string("HÉ¦¦Ó", :iso_8859_1)
       {:ok, <<72, 201, 166, 166, 211>>}
 
@@ -307,71 +329,102 @@ defmodule Codepagex do
       iex> from_string("ʒ", :iso_8859_1)
       {:error, "Invalid bytes for encoding"}
 
-  The encoding parameter should be in `encoding_list/0` or `aliases/0`. It may
-  be passed as an atom, or a string for full encoding names.
   """
   def from_string(string, encoding) do
-    from_string(string, encoding, &error_on_missing/2, nil)
+    from_string(string, encoding, error_on_missing, nil)
     |> strip_acc
   end
 
   @doc """
-  Convert a string to a binary with a given encoding. A function is passed to
-  handle codepoints that are not possible to encode properly.
+  Convert an Elixir String in utf-8 to a binary in a specified encoding. A
+  function parameter specifies how to deal with codepoints that are not
+  representable in the target encoding.
 
-  Encoding must be a string or atom as returned by `aliases/0` or
-  `encoding_list/0`. 
+  Compared to `from_string/2`, you may pass a `missing_fun` function parameter
+  to handle encoding errors in `string`. The function `replace_nonexistent/1`
+  may be used as a default error handling machanism.
 
-  If you want to replace all impossible codepoints to a certain character, use
-  the function `replace_nonexistent/1`.
+  The `encoding` parameter should be in `encoding_list/0` as an atom or String,
+  or in `aliases/0`.
 
-  The function parameter `missing_fun` must receive two arguments, the first
-  being a string containing the rest of the `string` parameter that is still
-  unprocessed. The second is the accumultor `acc`. `acc` is used to preserve
-  state between invocations of `missing_fun`. It must return:
+  ## Implementing missing_fun
+
+  The `missing_fun` must be an anonymous function that returns a second
+  function. The outer function will receive the encoding used by
+  `from_string/4`, and must then return `{:ok, inner_function}` or `{:error,
+  reason}`. Returning `:error` will cause `from_string/4` to fail.
+
+  The returned inner function must receive two arguments. 
+
+  - a String containing the remainder of the `string` parameter that is still
+    unprocessed.
+  - the accumulator `acc`
+
+  The return value must be
 
   - `{:ok, replacement, new_rest, new_acc}` to continue processing
-  - `{:error, reason, new_acc}` to return an error from `to_string/4`
+  - `{:error, reason, new_acc}` to cause `from_string/4` to fail
 
-  The `replacement` value is inserted into the result binary, and must be in
-  the encoding of the result. Processing will continue with `rest`. `acc` is
-  passed to the nect invocation of `missing_fun`, or returned by
-  `from_string/4`.
+  The `acc` parameter from `from_string/4` is passed between every invocation
+  of the inner function then returned by `to_string/4`. In many use cases,
+  `acc` may be ignored.
 
-  The accumulator is useful if you need to keep track of a state in the string,
-  for example left-right mode or the number of replacements done. In some cases
-  it may be ignored. 
-
-  See also `from_string!/4`
 
   ## Examples
 
   Using the `replace_nonexistent/1` function to handle invalid bytes:
 
-      iex> f = "_" |> to_string!(:ascii) |> replace_nonexistent
-      iex> from_string("Hello æøå!", :ascii, f)
+      iex> from_string("Hello æøå!", :ascii, replace_nonexistent("_"))
       {:ok, "Hello ___!", 3}
 
-  In this example, we replace missing chars with "#", and return the number of
-  replacements made:
+  Defining a custom `missing_fun`:
 
-      iex> f = fn <<_::utf8, rest::binary>>, acc -> {:ok, "#", rest, acc + 1} end
-      iex> from_string("Hello æøå!", :ascii, f, 0)
+      iex> missing_fun =
+      ...>   fn encoding ->
+      ...>     case from_string("#", encoding) do
+      ...>       {:ok, replacement} ->
+      ...>         inner_fun = 
+      ...>           fn <<_ :: utf8, rest :: binary>>, acc ->
+      ...>             {:ok, replacement, rest, acc + 1}
+      ...>           end
+      ...>         {:ok, inner_fun}
+      ...>       err ->
+      ...>         err
+      ...>     end
+      ...>   end
+      iex> from_string("Hello æøå!", :ascii, missing_fun, 0)
       {:ok, "Hello ###!", 3}
+  
+  The previous code was included for completeness. If you know your replacement
+  is valid in the target encoding, you might as well do:
 
+      iex> missing_fun = fn encoding ->
+      ...>   inner_fun = 
+      ...>     fn <<_ :: utf8, rest :: binary>>, acc ->
+      ...>       {:ok, "#", rest, acc + 1}
+      ...>     end
+      ...>   {:ok, inner_fun}
+      ...> end
+      iex> from_string("Hello æøå!", :ascii, missing_fun, 10)
+      {:ok, "Hello ###!", 13}
   """
   def from_string(string, encoding, missing_fun, acc \\ nil)
 
   # aliases are forwarded to proper name
   for {aliaz, encoding} <- Mappings.aliases do
     def from_string(string, unquote(aliaz), missing_fun, acc) do
-    Mappings.from_string(
-      string, unquote(encoding |> String.to_atom), missing_fun, acc)
+      from_string(
+        string, unquote(encoding |> String.to_atom), missing_fun, acc)
     end
   end
 
   def from_string(string, encoding, missing_fun, acc) when is_atom(encoding) do
-    Mappings.from_string(string, encoding, missing_fun, acc)
+    case missing_fun.(encoding) do
+      {:ok, inner_fun} ->
+        Mappings.from_string(string, encoding, inner_fun, acc)
+      err ->
+        err
+    end
   end
 
   def from_string(string, encoding, missing_fun, acc) when is_binary(encoding) do
@@ -384,9 +437,9 @@ defmodule Codepagex do
   end
 
   @doc """
-  Convert an Elixir string in utf-8 encoding to a binary in another encoding.
+  Like `from_string/2` but raising exceptions on errors.
 
-  This variant of `from_string/2` will raise an exception on error
+  ## Examples
 
       iex> from_string!("HÉ¦¦Ó", :iso_8859_1)
       <<72, 201, 166, 166, 211>>
@@ -394,56 +447,19 @@ defmodule Codepagex do
       iex> from_string!("ʒ", :iso_8859_1)
       ** (Codepagex.Error) Invalid bytes for encoding
 
-  The encoding parameter should be in `encoding_list/0` or `aliases/0`. It may be 
-  passed as an atom, or a string for full encoding names.
   """
   def from_string!(binary, encoding) do
-    from_string! binary, encoding, &error_on_missing/2, nil
+    from_string! binary, encoding, error_on_missing, nil
   end
 
   @doc """
-  Convert a string to a binary with a given encoding. A function is passed to
-  handle codepoints that are not possible to encode properly.
-
-  Encoding must be a string or atom as returned by `aliases/0` or
-  `encoding_list/0`. 
-
-  If you want to replace all impossible codepoints to a certain character, use
-  the function `replace_nonexistent/1`.
-
-  The function parameter `missing_fun` must receive two arguments, the first
-  being a string containing the rest of the `string` parameter that is still
-  unprocessed. The second is the accumultor `acc`. `acc` is used to preserve
-  state between invocations of `missing_fun`. It must return:
-
-  - `{:ok, replacement, new_rest, new_acc}` to continue processing
-  - `{:error, reason, new_acc}` to return an error from `to_string/4`
-
-  The `replacement` value is inserted into the result binary, and must be in
-  the encoding of the result. Processing will continue with `rest`. `acc` is
-  passed to the next invocation of `missing_fun`, or returned by
-  `from_string/4`.
-
-  The accumulator is useful if you need to keep track of a state in the string,
-  for example left-right mode or the number of replacements done. In some cases
-  it may be ignored. 
-
-  See also `from_string/4`
+  Like `from_string/2` but raising exceptions on errors.
 
   ## Examples
 
-  Using the `replace_nonexistent/1` function to handle invalid bytes:
-
-      iex> f = "_" |> to_string!(:ascii) |> replace_nonexistent
-      iex> from_string!("Hello æøå!", :ascii, f)
+      iex> missing_fun = replace_nonexistent("_")
+      iex> from_string!("Hello æøå!", :ascii, missing_fun)
       "Hello ___!"
-
-  In this example, we replace missing chars with "#", and return the number of
-  replacements made:
-
-      iex> f = fn <<_::utf8, rest::binary>>, acc -> {:ok, "#", rest, acc + 1} end
-      iex> from_string!("Hello æøå!", :ascii, f, 0)
-      "Hello ###!"
 
   """
   def from_string!(string, encoding, missing_fun, acc \\ nil) do
@@ -459,14 +475,17 @@ defmodule Codepagex do
   Convert a binary in one encoding to a binary in another encoding. The string
   is converted to utf-8 internally in the process.
 
+  The encoding parameters should be in `encoding_list/0` or `aliases/0`. It may
+  be passed as an atom, or a string for full encoding names.
+
+  ## Examples 
+
       iex> translate(<<174>>, :iso_8859_1, :iso_8859_15)
       {:ok, <<174>>}
 
       iex> translate(<<174>>, :iso_8859_1, :iso_8859_2)
       {:error, "Invalid bytes for encoding"}
 
-  The encoding parameters should be in `encoding_list/0` or `aliases/0`. It may
-  be passed as an atom, or a string for full encoding names.
   """
   def translate(binary, encoding_from, encoding_to) do
     case to_string(binary, encoding_from) do
@@ -478,8 +497,9 @@ defmodule Codepagex do
   end
 
   @doc """
-  Convert a binary in one encoding to a binary in another encoding. The string
-  is converted to utf-8 internally in the process.
+  Like `translate/3` but raises exceptions on errors
+
+  ## Examples
 
       iex> translate!(<<174>>, :iso_8859_1, :iso_8859_15)
       <<174>>
@@ -487,8 +507,6 @@ defmodule Codepagex do
       iex> translate!(<<174>>, :iso_8859_1,:iso_8859_2)
       ** (Codepagex.Error) Invalid bytes for encoding
 
-  The encoding parameters should be in `encoding_list/0` or `aliases/0`. It may be 
-  passed as an atom, or a string for full encoding names.
   """
   def translate!(binary, encoding_from, encoding_to) do
     binary

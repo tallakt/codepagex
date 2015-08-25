@@ -164,7 +164,7 @@ defmodule Codepagex.Mappings do
   # define the to_string_xxx for each mapping
   for {n, m} <- @encodings, do: Helpers.def_to_string(n, m)
 
-  # define methods to forward to_string(mapping, binary) to a specific implementation
+  # define methods to forward to_string(...) to a specific implementation
   for {name, _} <- @encodings do
     fun_name = Helpers.function_name_for_mapping_name("to_string", name)
     def to_string(binary, unquote(name |> String.to_atom), missing_fun, acc) do
@@ -179,7 +179,7 @@ defmodule Codepagex.Mappings do
   # define the from_string_xxx for each encoding
   for {n, m} <- @encodings, do: Helpers.def_from_string(n, m)
 
-  # define methods to forward from_string(encoding, binary) to a specific implementation
+  # define methods to forward from_string(...) to a specific implementation
   for {name, _} <- @encodings do
     fun_name = Helpers.function_name_for_mapping_name("from_string", name)
     def from_string(string, unquote(name |> String.to_atom), missing_fun, acc) do
