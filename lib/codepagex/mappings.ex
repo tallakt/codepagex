@@ -14,6 +14,44 @@ defmodule Codepagex.Mappings.Helpers do
     :"#{prefix}_#{mapping_part}"
   end
 
+  def group_encoding_by_offset(encoding) do
+    encoding
+    |> Enum.group_by(&offset_and_size_for_encoding/1)
+    |> Enum.flat_map(&reduce_consecutive_to_ranges/1)
+  end
+
+  defp offset_and_size_for_encoding({from_binary, to_utf8}) do
+    case from_binary do
+      <<word :: 16>> ->
+        {to_utf8 - word, 2}
+      <<byte :: 8>> ->
+        {to_utf8 - byte, 1}
+      true ->
+        :others # don't process these any more
+    end
+  end
+
+  defp to_range_or_value(_, _, [encoding_point]), do: encoding_point
+
+  defp to_range_or_value(offset, size, [{_, t0} | t]) do
+    {_, tn} = Enum.at(t, -1)
+    {offset, size, t0..tn}
+  end
+
+  # If there are several encoding points that are consecutive and share offset,
+  # then these sections are reduced to a range of utf points that may be
+  # handled by a single function with a `where` clause
+  # Single points are handles with a dedicated function
+  defp reduce_consecutive_to_ranges({{offset, size}, encoding_point_list}) do
+    encoding_point_list
+    |> Codepagex.Chunk.chunk_between(fn {_, t0}, {_, t1} -> t1 - t0 != 1 end)
+    |> Enum.map(&(to_range_or_value(offset, size, &1)))
+  end
+
+  defp reduce_consecutive_to_ranges({:others, encoding_point_list}) do
+    encoding_point_list # leave these as is
+  end
+
   defmacro def_to_string(name, encoding) do
     quote(bind_quoted: [n: name, e: encoding], unquote: false) do
       alias Codepagex.Mappings.Helpers
