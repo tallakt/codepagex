@@ -31,6 +31,7 @@ defmodule Codepagex.Mixfile do
   # Type `mix help deps` for more examples and options
   defp deps do
     [
+       {:benchwarmer, "~> 0.0.2", only: :dev },
        {:earmark, only: :dev},
        {:ex_doc, only: :dev}, 
        {:inch_ex, only: :docs}
