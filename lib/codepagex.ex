@@ -241,7 +241,7 @@ defmodule Codepagex do
 
       iex> iso = "Hello æøå!" |> from_string!(:iso_8859_1)
       iex> missing_fun = 
-      ...>   fn encoding ->
+      ...>   fn _encoding ->
       ...>     inner_fun = 
       ...>       fn <<_, rest :: binary>>, acc ->
       ...>         {:ok, "#", rest, acc + 1}
@@ -398,7 +398,7 @@ defmodule Codepagex do
   The previous code was included for completeness. If you know your replacement
   is valid in the target encoding, you might as well do:
 
-      iex> missing_fun = fn encoding ->
+      iex> missing_fun = fn _encoding ->
       ...>   inner_fun = 
       ...>     fn <<_ :: utf8, rest :: binary>>, acc ->
       ...>       {:ok, "#", rest, acc + 1}

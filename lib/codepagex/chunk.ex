@@ -7,7 +7,7 @@ defmodule Codepagex.Chunk do
   ## Examples
 
       iex> list = for x <- 1000..1011, rem(x, 5) != 0, do: x
-      iex> chunk_between(list, fn a, b -> b - a != 1 end) |> IO.inspect
+      iex> chunk_between(list, fn a, b -> b - a != 1 end)
       [[1001, 1002, 1003, 1004], [1006, 1007, 1008, 1009], [1011]]
 
   """

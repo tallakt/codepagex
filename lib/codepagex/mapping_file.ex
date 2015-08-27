@@ -11,7 +11,7 @@ defmodule Codepagex.MappingFile do
     |> Stream.map(&(parse_line(&1, filename)))
     |> Stream.filter(&(&1))
     |> remove_overlapping
-    |> Enum.to_list
+    |> Enum.reverse
   end
 
   defp remove_overlapping(enum) do
