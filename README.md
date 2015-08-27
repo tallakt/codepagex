@@ -107,7 +107,5 @@ The encodings that are known to require very long compile times are:
 
 - A few encodings are not yet supported for different reasons. In particular
   the asian and arab ones with left-right and up-down variations.
-- Optimize lookup so that a range with equal offset may be treated in one 
-  pattern match
 - Elixir function specs
 
