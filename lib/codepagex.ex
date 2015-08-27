@@ -1,8 +1,4 @@
 defmodule Codepagex do
-  require Codepagex.Mappings
-
-  alias Codepagex.Mappings
-
   # unfortunately exdoc doesnt support ``` fenced blocks
   @moduledoc (
     File.read!("README.md")
@@ -10,6 +6,17 @@ defmodule Codepagex do
     |> Enum.reject(&(String.match?(&1, ~r/```|Build Status|Documentation Status/)))
     |> Enum.join("\n")
     )
+
+  require Codepagex.Mappings
+  alias Codepagex.Mappings
+
+  @type to_s_missing_inner :: ((binary, term) -> {:ok, String.t, binary, term} | {:error, term})
+  @type to_s_missing_outer :: ((String.t) -> {:ok, to_s_missing_inner} | {:error, term})
+
+  @type from_s_missing_inner :: ((String.t, term) -> {:ok, binary, String.t, term} | {:error, term})
+  @type from_s_missing_outer :: ((String.t) -> {:ok, from_s_missing_inner} | {:error, term})
+
+  @type encoding :: atom | String.t
 
   @aliases_markdown (
     Mappings.aliases(:all)
@@ -33,6 +40,7 @@ defmodule Codepagex do
 
   For a full list of encodings, see `encoding_list/1`
   """
+  @spec aliases(atom) :: list(atom)
   def aliases(selection \\ nil)
   defdelegate aliases(selection), to: Mappings
 
@@ -69,6 +77,7 @@ defmodule Codepagex do
   For a list of shorthand names, see `aliases/1`
 
   """
+  @spec encoding_list(atom) :: list(String.t)
   def encoding_list(selection \\ nil)
   defdelegate encoding_list(selection), to: Mappings
 
@@ -103,6 +112,7 @@ defmodule Codepagex do
       {:ok, "Hello ���!", 3}
 
   """
+  @spec use_utf_replacement :: to_s_missing_outer
   def use_utf_replacement do
     fn _encoding ->
       inner = 
@@ -139,6 +149,7 @@ defmodule Codepagex do
       {:ok, "Hello ___!", 103}
 
   """
+  @spec replace_nonexistent(String.t) :: from_s_missing_outer
   def replace_nonexistent(replace_with) do
     fn encoding ->
       case from_string(replace_with, encoding) do
@@ -174,6 +185,7 @@ defmodule Codepagex do
       {:error, "Invalid bytes for encoding"}
 
   """
+  @spec to_string(binary, encoding) :: {:ok, String.t} | {:error, term}
   def to_string(binary, encoding) do
     to_string(binary, encoding, error_on_missing)
     |> strip_acc
@@ -251,6 +263,7 @@ defmodule Codepagex do
       iex> to_string(iso, :ascii, missing_fun, 10)
       {:ok, "Hello ###!", 13}
   """
+  @spec to_string(binary, encoding, to_s_missing_outer, term) :: {:ok, String.t} | {:error, term}
   def to_string(binary, encoding, missing_fun, acc \\ nil)
 
   # create a forwarding to_string implementation for each alias
@@ -289,6 +302,7 @@ defmodule Codepagex do
       iex> to_string!(<<128>>, "ETSI/GSM0338")
       ** (Codepagex.Error) Invalid bytes for encoding
   """
+  @spec to_string!(binary, encoding) :: String.t
   def to_string!(binary, encoding) do
     to_string!(binary, encoding, error_on_missing, nil)
   end
@@ -303,6 +317,7 @@ defmodule Codepagex do
       "Hello ���!"
 
   """
+  @spec to_string!(binary, encoding, to_s_missing_outer, term) :: String.t
   def to_string!(binary, encoding, missing_fun, acc \\ nil) do
     case to_string(binary, encoding, missing_fun, acc) do
       {:ok, result, _} ->
@@ -330,6 +345,7 @@ defmodule Codepagex do
       {:error, "Invalid bytes for encoding"}
 
   """
+  @spec from_string(String.t, encoding) :: {:ok, binary} | {:error, term}
   def from_string(string, encoding) do
     from_string(string, encoding, error_on_missing, nil)
     |> strip_acc
@@ -408,6 +424,7 @@ defmodule Codepagex do
       iex> from_string("Hello æøå!", :ascii, missing_fun, 10)
       {:ok, "Hello ###!", 13}
   """
+  @spec from_string(binary, encoding, from_s_missing_outer, term) :: {:ok, String.t} | {:error, term}
   def from_string(string, encoding, missing_fun, acc \\ nil)
 
   # aliases are forwarded to proper name
@@ -448,12 +465,13 @@ defmodule Codepagex do
       ** (Codepagex.Error) Invalid bytes for encoding
 
   """
+  @spec from_string!(String.t, encoding) :: binary
   def from_string!(binary, encoding) do
     from_string! binary, encoding, error_on_missing, nil
   end
 
   @doc """
-  Like `from_string/2` but raising exceptions on errors.
+  Like `from_string/4` but raising exceptions on errors.
 
   ## Examples
 
@@ -462,6 +480,7 @@ defmodule Codepagex do
       "Hello ___!"
 
   """
+  @spec from_string!(String.t, encoding, from_s_missing_outer, term) :: binary
   def from_string!(string, encoding, missing_fun, acc \\ nil) do
     case from_string(string, encoding, missing_fun, acc) do
       {:ok, result, _} ->
@@ -487,6 +506,7 @@ defmodule Codepagex do
       {:error, "Invalid bytes for encoding"}
 
   """
+  @spec translate(binary, encoding, encoding) :: {:ok, binary} | {:error, term}
   def translate(binary, encoding_from, encoding_to) do
     case to_string(binary, encoding_from) do
       {:ok, string} ->
@@ -508,6 +528,7 @@ defmodule Codepagex do
       ** (Codepagex.Error) Invalid bytes for encoding
 
   """
+  @spec translate(binary, encoding, encoding) :: binary
   def translate!(binary, encoding_from, encoding_to) do
     binary
     |> to_string!(encoding_from)
