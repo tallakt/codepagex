@@ -3,7 +3,7 @@ defmodule Codepagex.Mixfile do
 
   def project do
     [app: :codepagex,
-     version: "0.0.4",
+     version: "0.0.5",
      elixir: "~> 1.0",
      name: "Codepagex",
      source_url: "https://github.com/tallakt/codepagex",
