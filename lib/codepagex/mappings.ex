@@ -14,73 +14,16 @@ defmodule Codepagex.Mappings.Helpers do
     :"#{prefix}_#{mapping_part}"
   end
 
-  def group_encoding_by_offset_and_compact(encoding_point_list) do
-    encoding_point_list
-    |> Enum.group_by(&offset_and_size_for_encoding/1)
-    |> Enum.flat_map(&reduce_consecutive_to_ranges/1)
-    |> Enum.sort_by(fn
-        {_, _, a..b} ->
-          -(b - a) # bigger ranges match first
-        _ ->
-            0
-      end)
-  end
-
-  defp offset_and_size_for_encoding({from_binary, to_utf8}) do
-    case from_binary do
-      <<word :: 32>> ->
-        {to_utf8 - word, 32}
-      <<word :: 24>> ->
-        {to_utf8 - word, 24}
-      <<word :: 16>> ->
-        {to_utf8 - word, 16}
-      <<byte :: 8>> ->
-        {to_utf8 - byte, 8}
-      true ->
-        :others # don't process these any more
-    end
-  end
-
-
-  defp to_range_or_value(_, _, [encoding_point]), do: encoding_point
-
-  defp to_range_or_value(offset, size, [{_, t0} | t]) do
-    {_, tn} = Enum.at(t, -1)
-    {offset, size, t0..tn}
-  end
-
-  # If there are several encoding points that are consecutive and share offset,
-  # then these sections are reduced to a range of utf points that may be
-  # handled by a single function with a `where` clause
-  # Single points are handles with a dedicated function
-  defp reduce_consecutive_to_ranges({{offset, size}, encoding_point_list}) do
-    encoding_point_list
-    |> Codepagex.Chunk.chunk_between(fn {_, t0}, {_, t1} -> t1 - t0 != 1 end)
-    |> Enum.map(&(to_range_or_value(offset, size, &1)))
-  end
-
-  defp reduce_consecutive_to_ranges({:others, encoding_point_list}) do
-    encoding_point_list # leave these as is
-  end
-
   defmacro def_to_string(name, encoding) do
     quote(bind_quoted: [n: name, e: encoding], unquote: false) do
       alias Codepagex.Mappings.Helpers
       fn_name = Helpers.function_name_for_mapping_name("to_string", n)
 
-      ee = Helpers.group_encoding_by_offset_and_compact(e)
-
-      for encoding_point <- ee do
+      for encoding_point <- e do
         case encoding_point do
           {from, to} ->
             def unquote(fn_name)(unquote(from) <> rest, acc, missing_fun, outer_acc) do
               unquote(fn_name)(rest, [unquote(to) | acc], missing_fun, outer_acc)
-            end
-
-          {offset, size, from..to} ->
-            def unquote(fn_name)(<<f :: unquote(size)>> <> rest, acc, fun, outer_acc)
-                when f in unquote(from - offset)..unquote(to - offset) do
-              unquote(fn_name)(rest, [f + unquote(offset) | acc], fun, outer_acc)
             end
         end
       end
@@ -113,19 +56,11 @@ defmodule Codepagex.Mappings.Helpers do
       alias Codepagex.Mappings.Helpers
       fn_name = Helpers.function_name_for_mapping_name("from_string", n)
 
-      ee = Helpers.group_encoding_by_offset_and_compact(e)
-
-      for encoding_point <- ee do
+      for encoding_point <- e do
         case encoding_point do
           {from, to} ->
             def unquote(fn_name)(<< unquote(to) :: utf8 >> <> rest, acc, fun, outer_acc) do
               unquote(fn_name)(rest, [unquote(from) | acc], fun, outer_acc)
-            end
-
-          {offset, size, from..to} ->
-            def unquote(fn_name)(<<f :: utf8>> <> rest, acc, fun, outer_acc)
-                when f in unquote(from)..unquote(to) do
-              unquote(fn_name)(rest, [<<(f - unquote(offset)) :: unquote(size)>> | acc], fun, outer_acc)
             end
         end
       end
