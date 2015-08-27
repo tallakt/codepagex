@@ -1,7 +1,10 @@
-defmodule Mix.Tasks.Benchmark do
+defmodule Mix.Tasks.Codepagex.Benchmark do
   use Mix.Task
   import Codepagex
 
+  # run with mix codepagex.benchmark
+  # It is not documented so that any project depending on this one will have
+  # this task available in `mix help`
   def run(_) do
     iso = from_string "æøåæøåæøåæøåæøåÆØÅÆØÅÆØÅÆØÅÆØÅabcdefghijlm", :iso_8859_1
     ascii = from_string "abcdefghijklmnopqrstuvwxyzABCDEFGHIJK", :ascii
