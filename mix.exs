@@ -3,9 +3,11 @@ defmodule Codepagex.Mixfile do
 
   def project do
     [app: :codepagex,
-     version: "0.0.5",
+     version: "0.0.6",
      elixir: "~> 1.0",
      name: "Codepagex",
+     description: description,
+     package: package,
      source_url: "https://github.com/tallakt/codepagex",
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
@@ -18,6 +20,25 @@ defmodule Codepagex.Mixfile do
   # Type `mix help compile.app` for more information
   def application do
     [applications: [:logger]]
+  end
+
+  defp description do
+    """
+    Codepagex is an  elixir library to convert between string encodings to and
+    from utf-8. Like iconv, but written in pure Elixir.
+    """
+  end
+
+  defp package do
+    [
+      files: ["lib", "priv", "mix.exs", "README*", "readme*", "LICENSE*", "license*"],
+      contributors: ["Tallak Tveide"],
+      licenses: ["Apache 2.0"],
+      links: %{
+        "GitHub" => "https://github.com/tveidet/codepagex",
+        "Docs" => "http://tallakt.github.io/codepagex/"
+      }
+    ]
   end
 
   # Dependencies can be Hex packages:
@@ -39,7 +60,10 @@ defmodule Codepagex.Mixfile do
   end
 
   defp aliases do
-    [{:"codepagex.download", &download_from_unicode_org/1}]
+    [
+      {:"codepagex.download", &download_from_unicode_org/1},
+      {:"codepagex.publish.docs", &github_publish_docs/1}
+    ]
   end
   # This mix task wil download the source mapping files from http://unicode.org
   # 
@@ -67,5 +91,24 @@ defmodule Codepagex.Mixfile do
 
   def download_from_unicode_org(_) do
     Mix.shell.cmd "wget -nH --cut-dirs=2 -r -P unicode -nv -X #{@ignore} #{@ftp}"
+  end
+
+
+  defp sh(cmd), do: cmd |> String.to_char_list |> :os.cmd |> List.to_string
+
+  def github_publish_docs(_) do
+    if String.match?(sh("git status --porcelain"), ~r(\S)) do
+      IO.puts :stderr, "Repository is not clean, git commit to continue"
+    else
+      File.rmdir "gh-pages"
+      File.mkdir_p "gh-pages"
+      Mix.Task.run "docs"
+      File.cp_r "doc", "gh-pages"
+      Mix.shell.cmd "git add -f gh-pages"
+      sh "tree=$(git write-tree --prefix=gh-pages/) && commit=$(echo \"Generated docs\" | git commit-tree $tree -p gh-pages) && git update-ref refs/heads/gh-pages $commit && git reset HEAD"
+      File.rm_rf "gh-pages"
+      Mix.shell.cmd "git reset --hard"
+      IO.puts "Now run: git push origin gh-pages"
+    end
   end
 end
