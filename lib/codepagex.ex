@@ -302,7 +302,7 @@ defmodule Codepagex do
       iex> to_string!(<<128>>, "ETSI/GSM0338")
       ** (Codepagex.Error) Invalid bytes for encoding
   """
-  @spec to_string!(binary, encoding) :: String.t
+  @spec to_string!(binary, encoding) :: String.t | no_return
   def to_string!(binary, encoding) do
     to_string!(binary, encoding, error_on_missing, nil)
   end
@@ -317,7 +317,7 @@ defmodule Codepagex do
       "Hello ���!"
 
   """
-  @spec to_string!(binary, encoding, to_s_missing_outer, term) :: String.t
+  @spec to_string!(binary, encoding, to_s_missing_outer, term) :: String.t | no_return
   def to_string!(binary, encoding, missing_fun, acc \\ nil) do
     case to_string(binary, encoding, missing_fun, acc) do
       {:ok, result, _} ->
@@ -465,7 +465,7 @@ defmodule Codepagex do
       ** (Codepagex.Error) Invalid bytes for encoding
 
   """
-  @spec from_string!(String.t, encoding) :: binary
+  @spec from_string!(String.t, encoding) :: binary | no_return
   def from_string!(binary, encoding) do
     from_string! binary, encoding, error_on_missing, nil
   end
@@ -480,7 +480,7 @@ defmodule Codepagex do
       "Hello ___!"
 
   """
-  @spec from_string!(String.t, encoding, from_s_missing_outer, term) :: binary
+  @spec from_string!(String.t, encoding, from_s_missing_outer, term) :: binary | no_return
   def from_string!(string, encoding, missing_fun, acc \\ nil) do
     case from_string(string, encoding, missing_fun, acc) do
       {:ok, result, _} ->
