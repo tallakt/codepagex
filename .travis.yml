@@ -7,8 +7,6 @@ sudo: false # to use faster container based build environment
 env:
   - ELIXIR_ERL_OPTIONS=""
   - ELIXIR_ERL_OPTIONS="+T 9"
-script:
-  - mix test
 after_script:
   - mix deps.get --only docs
   - MIX_ENV=dev mix inch.report
