@@ -12,7 +12,9 @@ defmodule Codepagex.Mixfile do
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
      deps: deps,
-     aliases: aliases]
+     aliases: aliases,
+     docs: [main: Codepagex]
+    ]
   end
 
   # Configuration for the OTP application

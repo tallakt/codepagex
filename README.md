@@ -1,5 +1,4 @@
-Codepagex
-=========
+# Codepagex
 
 [![Build Status](https://travis-ci.org/tallakt/codepagex.svg)](https://travis-ci.org/tallakt/codepagex)
 [![Documentation Status](https://inch-ci.org/github/tallakt/codepagex.svg?branch=master)](https://inch-ci.org/github/tallakt/codepagex#)

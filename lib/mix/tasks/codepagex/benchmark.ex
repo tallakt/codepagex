@@ -1,4 +1,6 @@
 defmodule Mix.Tasks.Codepagex.Benchmark do
+  @moduledoc false
+
   use Mix.Task
   import Codepagex
 
