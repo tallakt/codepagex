@@ -111,4 +111,14 @@ defmodule CodepagexTest do
       Codepagex.translate!("൨", :iso_8859_1, "ETSI/GSM0338")
     end
   end
+
+  # This test must be run by itself. It may be initiated by running:
+  #
+  # `mix test --only run_solo`
+  #
+  # Also please run the test a few times, as it's a bit flaky
+  @tag :run_solo
+  test "atoms loaded from Codepagex.Mappings" do
+    assert {:ok, "Codepagex"} = Codepagex.to_string("Codepagex", "ETSI/GSM0338")
+  end
 end

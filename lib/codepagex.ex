@@ -18,6 +18,13 @@ defmodule Codepagex do
 
   @type encoding :: atom | String.t
 
+  @on_load :load_atoms
+
+  def load_atoms do
+    Code.ensure_loaded? Codepagex.Mappings
+    :ok
+  end
+
   @aliases_markdown (
     Mappings.aliases(:all)
     |> Enum.map(fn {a, m} -> "  | #{inspect(a) |> String.ljust(15)} | #{m} |" end)
