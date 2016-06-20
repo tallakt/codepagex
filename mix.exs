@@ -12,7 +12,7 @@ defmodule Codepagex.Mixfile do
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
      deps: deps,
-     aliases: aliases,
+     aliases: [],
      docs: [main: Codepagex]
     ]
   end
@@ -54,43 +54,10 @@ defmodule Codepagex.Mixfile do
   # Type `mix help deps` for more examples and options
   defp deps do
     [
-       {:benchwarmer, "~> 0.0.2", only: :dev },
+       {:benchee, "~> 0.2", only: :dev },
        {:earmark, only: :dev},
        {:ex_doc, only: :dev}, 
        {:inch_ex, only: :docs}
     ]
-  end
-
-  defp aliases do
-    [
-      {:"codepagex.download", &download_from_unicode_org/1}
-    ]
-  end
-  # This mix task wil download the source mapping files from http://unicode.org
-  # 
-  # The files should already be present in the git repository, but if necessary,
-  # this mix task may be run to refresh them.
-  # 
-  # `wget` is assumed to be installed.
-  # 
-  # Some files are left out of the download process altogether, while others are
-  # filtered by `.gitignore`, depending on what seemed most practical.
-  # 
-  # ## Synopsis
-  # 
-  # $ mix codepagex.download
-  # 
-
-  @ftp "ftp://ftp.unicode.org/Public/MAPPINGS/"
-  @ignore ~w(
-      /Public/MAPPINGS/OBSOLETE
-      /Public/MAPPINGS/ISO8859/DatedVersions/
-      /Public/MAPPINGS/VENDORS/ADOBE/
-      /Public/MAPPINGS/VENDORS/MICSFT/WindowsBestFit/
-    ) |> Enum.join(",")
-  # note: other files are downloaded, but are in unicode/.gitignore
-
-  def download_from_unicode_org(_) do
-    Mix.shell.cmd "wget -nH --cut-dirs=2 -r -P unicode -nv -X #{@ignore} #{@ftp}"
   end
 end
