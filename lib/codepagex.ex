@@ -174,6 +174,7 @@ defmodule Codepagex do
     end
   end
 
+  @spec strip_acc({atom, term, integer}) :: {atom, term}
   defp strip_acc({code, return_value, _acc}), do: {code, return_value}
 
 
@@ -270,8 +271,9 @@ defmodule Codepagex do
       ...>   end
       iex> to_string(iso, :ascii, missing_fun, 10)
       {:ok, "Hello ###!", 13}
+
   """
-  @spec to_string(binary, encoding, to_s_missing_outer, term) :: {:ok, String.t} | {:error, term}
+  @spec to_string(binary, encoding, to_s_missing_outer, term) :: {:ok, String.t, integer} | {:error, term, integer}
   def to_string(binary, encoding, missing_fun, acc \\ nil)
 
   # create a forwarding to_string implementation for each alias
@@ -431,8 +433,9 @@ defmodule Codepagex do
       ...> end
       iex> from_string("Hello æøå!", :ascii, missing_fun, 10)
       {:ok, "Hello ###!", 13}
+
   """
-  @spec from_string(binary, encoding, from_s_missing_outer, term) :: {:ok, String.t} | {:error, term}
+  @spec from_string(binary, encoding, from_s_missing_outer, term) :: {:ok, String.t, integer} | {:error, term, integer}
   def from_string(string, encoding, missing_fun, acc \\ nil)
 
   # aliases are forwarded to proper name
@@ -536,7 +539,7 @@ defmodule Codepagex do
       ** (Codepagex.Error) Invalid bytes for encoding
 
   """
-  @spec translate(binary, encoding, encoding) :: binary
+  @spec translate!(binary, encoding, encoding) :: binary
   def translate!(binary, encoding_from, encoding_to) do
     binary
     |> to_string!(encoding_from)
