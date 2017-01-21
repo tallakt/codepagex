@@ -2,11 +2,11 @@ defmodule Codepagex do
   # unfortunately exdoc doesnt support ``` fenced blocks
   @moduledoc (
     File.read!("README.md")
-    |> String.split("\n") 
+    |> String.split("\n")
     |> Enum.reject(&(String.match?(&1, ~r/#.Codepagex/)))
     |> Enum.reject(&(String.match?(&1, ~r/```|Build Status|Documentation Status/)))
     |> Enum.join("\n")
-    )
+  )
 
   require Codepagex.Mappings
   alias Codepagex.Mappings
@@ -30,11 +30,11 @@ defmodule Codepagex do
     Mappings.aliases(:all)
     |> Enum.map(fn {a, m} -> "  | #{inspect(a) |> String.ljust(15)} | #{m} |" end)
     |> Enum.join("\n")
-    )
+  )
 
   @doc """
   Returns a list of shorthand aliases that may be used instead of the full name
-  of the encoding. 
+  of the encoding.
 
   The available aliases are:
 
@@ -61,23 +61,23 @@ defmodule Codepagex do
     |> Enum.map(&(Enum.join(&1, " | ")))
     |> Enum.map(&("| #{&1} |"))
     |> Enum.join("\n")
-    )
+  )
 
   @encodings_atom (
     Mappings.encoding_list(:all)
     |> Enum.map(&String.to_atom/1)
-    )
+  )
 
   @doc """
-  Returns a list of the supported encodings. These are extracted from 
+  Returns a list of the supported encodings. These are extracted from
   http://unicode.org/ and the names correspond to a encoding file on that page
 
   `encoding_list/1` is normally called without any parameters to list the
   encodings that are currently configured during compilation. To see all
   available options, even those unavailable, use `encoding_list(:all)`
 
-  The available encodings are: 
-  
+  The available encodings are:
+
   #{@encodings_markdown}
 
   For more information about configuring encodings, refer to `Codepagex`.
@@ -123,7 +123,7 @@ defmodule Codepagex do
   @spec use_utf_replacement :: to_s_missing_outer
   def use_utf_replacement do
     fn _encoding ->
-      inner = 
+      inner =
         fn <<_, rest::binary>>, acc ->
           # � replacement character used to replace an unknown or unrepresentable
           # character
@@ -133,18 +133,18 @@ defmodule Codepagex do
       {:ok, inner}
     end
   end
-  
+
 
   @doc """
   This function may be used in conjunction with to `from_string/4` or
   `from_string!/4`. If there are utf-8 codepoints in the source string that are
   not possible to represent in the target encoding, they are replaced with a
   String.
-  
+
   When using this function, `from_string/4` will never return an error if
   `replace_with` converts to the target encoding without errors.
 
-  
+
   The accumulator input `acc` of `from_string/4` is incremented on each
   replacement done.
 
@@ -162,7 +162,7 @@ defmodule Codepagex do
     fn encoding ->
       case from_string(replace_with, encoding) do
         {:ok, encoded_replace_with} ->
-          inner = 
+          inner =
             fn <<_ :: utf8, rest :: binary>>, acc ->
               new_acc = if is_integer(acc), do: acc + 1, else: 1
               {:ok, encoded_replace_with, rest, new_acc}
@@ -183,7 +183,7 @@ defmodule Codepagex do
   encoding.
 
   The encoding parameter should be in `encoding_list/0` (passed as atoms or
-  strings), or in `aliases/0`. 
+  strings), or in `aliases/0`.
 
   ## Examples
 
@@ -216,7 +216,7 @@ defmodule Codepagex do
   and must then return `{:ok, inner_function}` or `{:error, reason}`. Returning
   `:error` will cause `to_string/4` to fail.
 
-  The returned inner function must receive two arguments. 
+  The returned inner function must receive two arguments.
 
   - a binary containing the remainder of the `binary` parameter that is still
     unprocessed.
@@ -245,7 +245,7 @@ defmodule Codepagex do
       ...>   fn encoding ->
       ...>     case to_string("#", encoding) do
       ...>       {:ok, replacement} ->
-      ...>         inner_fun = 
+      ...>         inner_fun =
       ...>           fn <<_, rest :: binary>>, acc ->
       ...>             {:ok, replacement, rest, acc + 1}
       ...>           end
@@ -256,14 +256,14 @@ defmodule Codepagex do
       ...>   end
       iex> to_string(iso, :ascii, missing_fun, 0)
       {:ok, "Hello ###!", 3}
-  
+
   The previous code was included for completeness. If you know your replacement
   is valid in the target encoding, you might as well do:
 
       iex> iso = "Hello æøå!" |> from_string!(:iso_8859_1)
-      iex> missing_fun = 
+      iex> missing_fun =
       ...>   fn _encoding ->
-      ...>     inner_fun = 
+      ...>     inner_fun =
       ...>       fn <<_, rest :: binary>>, acc ->
       ...>         {:ok, "#", rest, acc + 1}
       ...>       end
@@ -293,7 +293,7 @@ defmodule Codepagex do
   end
 
   def to_string(binary, encoding, missing_fun, acc) when is_binary(encoding) do
-    try do 
+    try do
       to_string(binary, String.to_existing_atom(encoding), missing_fun, acc)
     rescue
       ArgumentError ->
@@ -380,7 +380,7 @@ defmodule Codepagex do
   `from_string/4`, and must then return `{:ok, inner_function}` or `{:error,
   reason}`. Returning `:error` will cause `from_string/4` to fail.
 
-  The returned inner function must receive two arguments. 
+  The returned inner function must receive two arguments.
 
   - a String containing the remainder of the `string` parameter that is still
     unprocessed.
@@ -409,7 +409,7 @@ defmodule Codepagex do
       ...>   fn encoding ->
       ...>     case from_string("#", encoding) do
       ...>       {:ok, replacement} ->
-      ...>         inner_fun = 
+      ...>         inner_fun =
       ...>           fn <<_ :: utf8, rest :: binary>>, acc ->
       ...>             {:ok, replacement, rest, acc + 1}
       ...>           end
@@ -420,12 +420,12 @@ defmodule Codepagex do
       ...>   end
       iex> from_string("Hello æøå!", :ascii, missing_fun, 0)
       {:ok, "Hello ###!", 3}
-  
+
   The previous code was included for completeness. If you know your replacement
   is valid in the target encoding, you might as well do:
 
       iex> missing_fun = fn _encoding ->
-      ...>   inner_fun = 
+      ...>   inner_fun =
       ...>     fn <<_ :: utf8, rest :: binary>>, acc ->
       ...>       {:ok, "#", rest, acc + 1}
       ...>     end
@@ -508,7 +508,7 @@ defmodule Codepagex do
   The encoding parameters should be in `encoding_list/0` or `aliases/0`. It may
   be passed as an atom, or a string for full encoding names.
 
-  ## Examples 
+  ## Examples
 
       iex> translate(<<174>>, :iso_8859_1, :iso_8859_15)
       {:ok, <<174>>}
