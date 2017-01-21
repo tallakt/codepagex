@@ -2,7 +2,7 @@ defmodule Codepagex.Mappings.Helpers do
   @moduledoc false
 
   def name_for_file(filename) do
-    Regex.run(~r|unicode/(.*)[.]txt|i, filename)
+    Regex.run(~r|unicode/(.*)\.txt$|i, filename)
     |> Enum.at(1)
   end
 
