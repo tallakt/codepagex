@@ -94,7 +94,7 @@ defmodule Codepagex.Mappings.Helpers do
   def filter_to_selected_encodings(names, filters, aliases) do
     matching = 
       for n = {k,_} <- names,
-          f <- Enum.map(filters, &(Dict.get aliases, &1, &1)),
+          f <- Enum.map(filters, &Map.get(aliases, &1, &1)),
           name_matches?(k, f),
           do: n
 
@@ -160,8 +160,8 @@ defmodule Codepagex.Mappings do
 
   # These are documented in Codepagex.encoding_list/1
   def encoding_list(selection \\ nil)
-  def encoding_list(:all), do: @all_names_files |> Dict.keys |> Enum.sort
-  def encoding_list(_), do: @filtered_names_files |> Dict.keys |> Enum.sort
+  def encoding_list(:all), do: @all_names_files |> Map.keys |> Enum.sort
+  def encoding_list(_), do: @filtered_names_files |> Keyword.keys |> Enum.sort
 
   # load mapping files
   @encodings (for {name, file} <- @filtered_names_files, 
