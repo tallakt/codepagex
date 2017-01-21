@@ -94,7 +94,7 @@ defmodule Codepagex.Mappings.Helpers do
   def filter_to_selected_encodings(names, filters, aliases) do
     matching = 
       for n = {k,_} <- names,
-          f <- Enum.map(filters, &(Keyword.get aliases, &1, &1)),
+          f <- Enum.map(filters, &Map.get(aliases, &1, &1)),
           name_matches?(k, f),
           do: n
 
