@@ -3,7 +3,7 @@ defmodule Codepagex.Mixfile do
 
   def project do
     [app: :codepagex,
-     version: "0.1.3",
+     version: "0.1.4",
      elixir: "~> 1.0",
      name: "Codepagex",
      description: description(),
@@ -33,8 +33,9 @@ defmodule Codepagex.Mixfile do
 
   defp package do
     [
-      files: ["lib", "priv", "mix.exs", "README*", "readme*", "LICENSE*", "license*", "unicode"],
+      files: ["lib", "mix.exs", "README*", "LICENSE*", "unicode"],
       contributors: ["Tallak Tveide"],
+      maintainers: ["Tallak Tveide"],
       licenses: ["Apache 2.0"],
       links: %{
         "GitHub" => "https://github.com/tallakt/codepagex"

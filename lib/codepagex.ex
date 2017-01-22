@@ -136,7 +136,6 @@ defmodule Codepagex do
   @spec use_utf_replacement :: to_s_missing_outer
   def use_utf_replacement do
     fn _encoding ->
-      inner =
       {:ok, &use_utf_replacement_inner/2}
     end
   end
