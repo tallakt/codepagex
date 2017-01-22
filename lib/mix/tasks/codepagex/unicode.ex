@@ -35,7 +35,9 @@ defmodule Mix.Tasks.Codepagex.Unicode do
 
   @shortdoc "Download source code files from unicode.org"
   def run(_) do
-    Mix.shell.cmd "wget -nH --cut-dirs=2 -r -P unicode -nv -X #{@ignore} #{@ftp}"
+    Mix.shell.cmd(
+      "wget -nH --cut-dirs=2 -r -P unicode -nv -X #{@ignore} #{@ftp}"
+    )
   end
 end
 

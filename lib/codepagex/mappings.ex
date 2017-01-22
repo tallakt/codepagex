@@ -2,7 +2,8 @@ defmodule Codepagex.Mappings.Helpers do
   @moduledoc false
 
   def name_for_file(filename) do
-    Regex.run(~r|unicode/(.*)\.txt$|i, filename)
+    ~r"unicode/(.*)\.txt$"i
+    |> Regex.run(filename)
     |> Enum.at(1)
   end
 
@@ -22,8 +23,12 @@ defmodule Codepagex.Mappings.Helpers do
       for encoding_point <- e do
         case encoding_point do
           {from, to} ->
-            def unquote(fn_name)(unquote(from) <> rest, acc, missing_fun, outer_acc) do
-              unquote(fn_name)(rest, [unquote(to) | acc], missing_fun, outer_acc)
+            def unquote(fn_name)(
+              unquote(from) <> rest, acc, missing_fun, outer_acc
+            ) do
+              unquote(fn_name)(
+                rest, [unquote(to) | acc], missing_fun, outer_acc
+              )
             end
         end
       end
@@ -45,7 +50,9 @@ defmodule Codepagex.Mappings.Helpers do
                 number
               end
               |> Enum.reverse
-            unquote(fn_name)(new_rest, codepoints ++ acc, missing_fun, new_outer_acc)
+            unquote(fn_name)(
+              new_rest, codepoints ++ acc, missing_fun, new_outer_acc
+            )
         end
       end
     end
@@ -59,7 +66,9 @@ defmodule Codepagex.Mappings.Helpers do
       for encoding_point <- e do
         case encoding_point do
           {from, to} ->
-            def unquote(fn_name)(<< unquote(to) :: utf8 >> <> rest, acc, fun, outer_acc) do
+            def unquote(fn_name)(
+              << unquote(to) :: utf8 >> <> rest, acc, fun, outer_acc
+            ) do
               unquote(fn_name)(rest, [unquote(from) | acc], fun, outer_acc)
             end
         end
@@ -138,12 +147,18 @@ defmodule Codepagex.Mappings do
     |> Path.join(Path.join(~w(** *.TXT)))
     |> Path.wildcard
     |> Enum.reject(&(String.match?(&1, ~r[README]i)))
-    |> Enum.reject(&(String.match?(&1, ~r[VENDORS/APPLE]i))) # lots of weird stuff
-    |> Enum.reject(&(String.match?(&1, ~r[MISC/IBMGRAPH]i))) # seems useless, other format
-    |> Enum.reject(&(String.match?(&1, ~r[VENDORS/MISC/APL-ISO-IR-68]i))) # generates warnings
-    |> Enum.reject(&(String.match?(&1, ~r[VENDORS/MISC/CP1006]i))) # generates warning
-    |> Enum.reject(&(String.match?(&1, ~r[NEXT]i))) # generates warning
-    |> Enum.reject(&(String.match?(&1, ~r[EBCDIC/CP875]i))) # generates warning
+    # lots of weird stuff
+    |> Enum.reject(&(String.match?(&1, ~r[VENDORS/APPLE]i)))
+    # seems useless, other format
+    |> Enum.reject(&(String.match?(&1, ~r[MISC/IBMGRAPH]i)))
+    # generates warnings
+    |> Enum.reject(&(String.match?(&1, ~r[VENDORS/MISC/APL-ISO-IR-68]i)))
+    # generates warnings
+    |> Enum.reject(&(String.match?(&1, ~r[VENDORS/MISC/CP1006]i)))
+    # generates warnings
+    |> Enum.reject(&(String.match?(&1, ~r[NEXT]i)))
+    # generates warnings
+    |> Enum.reject(&(String.match?(&1, ~r[EBCDIC/CP875]i)))
   )
 
   @all_names_files (for n <- @all_mapping_files,
@@ -188,7 +203,9 @@ defmodule Codepagex.Mappings do
   # define methods to forward from_string(...) to a specific implementation
   for {name, _} <- @encodings do
     fun_name = Helpers.function_name_for_mapping_name("from_string", name)
-    def from_string(string, unquote(name |> String.to_atom), missing_fun, acc) do
+    def from_string(
+      string, unquote(name |> String.to_atom), missing_fun, acc
+    ) do
       unquote(fun_name)(string, [], missing_fun, acc)
     end
   end

@@ -37,7 +37,7 @@ specify a function to handle these circumstances. Eg:
     {:ok, "Hello ___!", 3}
 
     iex> iso = "Hello æøå!" |> from_string!(:iso_8859_1)
-    iex> to_string!(iso, :ascii, use_utf_replacement)
+    iex> to_string!(iso, :ascii, use_utf_replacement())
     "Hello ���!"
 ```
 

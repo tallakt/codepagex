@@ -4,18 +4,24 @@ defmodule Codepagex do
     File.read!("README.md")
     |> String.split("\n")
     |> Enum.reject(&(String.match?(&1, ~r/#.Codepagex/)))
-    |> Enum.reject(&(String.match?(&1, ~r/```|Build Status|Documentation Status/)))
+    |> Enum.reject(
+        &(String.match?(&1, ~r/```|Build Status|Documentation Status/))
+      )
     |> Enum.join("\n")
   )
 
   require Codepagex.Mappings
   alias Codepagex.Mappings
 
-  @type to_s_missing_inner :: ((binary, term) -> {:ok, String.t, binary, term} | {:error, term})
-  @type to_s_missing_outer :: ((String.t) -> {:ok, to_s_missing_inner} | {:error, term})
+  @type to_s_missing_inner ::
+    ((binary, term) -> {:ok, String.t, binary, term} | {:error, term})
+  @type to_s_missing_outer ::
+    ((String.t) -> {:ok, to_s_missing_inner} | {:error, term})
 
-  @type from_s_missing_inner :: ((String.t, term) -> {:ok, binary, String.t, term} | {:error, term})
-  @type from_s_missing_outer :: ((String.t) -> {:ok, from_s_missing_inner} | {:error, term})
+  @type from_s_missing_inner ::
+    ((String.t, term) -> {:ok, binary, String.t, term} | {:error, term})
+  @type from_s_missing_outer ::
+    ((String.t) -> {:ok, from_s_missing_inner} | {:error, term})
 
   @type encoding :: atom | String.t
 
@@ -26,9 +32,13 @@ defmodule Codepagex do
     :ok
   end
 
+  format_helper = fn {a, m} ->
+    "  | #{inspect(a) |> String.ljust(15)} | #{m} |"
+  end
+
   @aliases_markdown (
     Mappings.aliases(:all)
-    |> Enum.map(fn {a, m} -> "  | #{inspect(a) |> String.ljust(15)} | #{m} |" end)
+    |> Enum.map(format_helper)
     |> Enum.join("\n")
   )
 
@@ -115,11 +125,11 @@ defmodule Codepagex do
   ## Examples
 
       iex> iso = "Hello æøå!" |> from_string!(:iso_8859_1)
-      iex> to_string!(iso, :ascii, use_utf_replacement)
+      iex> to_string!(iso, :ascii, use_utf_replacement())
       "Hello ���!"
 
       iex> iso = "Hello æøå!" |> from_string!(:iso_8859_1)
-      iex> to_string(iso, :ascii, use_utf_replacement)
+      iex> to_string(iso, :ascii, use_utf_replacement())
       {:ok, "Hello ���!", 3}
 
   """
@@ -127,14 +137,15 @@ defmodule Codepagex do
   def use_utf_replacement do
     fn _encoding ->
       inner =
-        fn <<_, rest::binary>>, acc ->
-          # � replacement character used to replace an unknown or unrepresentable
-          # character
-          new_acc = if is_integer(acc), do: acc + 1, else: 1
-          {:ok, <<0xFFFD :: utf8>>, rest, new_acc}
-        end
-      {:ok, inner}
+      {:ok, &use_utf_replacement_inner/2}
     end
+  end
+
+  defp use_utf_replacement_inner(<<_, rest::binary>>, acc) do
+    # � replacement character used to replace an unknown or
+    # unrepresentable character
+    new_acc = if is_integer(acc), do: acc + 1, else: 1
+    {:ok, <<0xFFFD :: utf8>>, rest, new_acc}
   end
 
 
@@ -240,7 +251,7 @@ defmodule Codepagex do
   Using the `use_utf_replacement/0` function to handle invalid bytes:
 
       iex> iso = "Hello æøå!" |> from_string!(:iso_8859_1)
-      iex> to_string(iso, :ascii, use_utf_replacement)
+      iex> to_string(iso, :ascii, use_utf_replacement())
       {:ok, "Hello ���!", 3}
 
       iex> iso = "Hello æøå!" |> from_string!(:iso_8859_1)
@@ -276,7 +287,8 @@ defmodule Codepagex do
       {:ok, "Hello ###!", 13}
 
   """
-  @spec to_string(binary, encoding, to_s_missing_outer, term) :: {:ok, String.t, integer} | {:error, term, integer}
+  @spec to_string(binary, encoding, to_s_missing_outer, term) ::
+    {:ok, String.t, integer} | {:error, term, integer}
   def to_string(binary, encoding, missing_fun, acc \\ nil)
 
   # create a forwarding to_string implementation for each alias
@@ -326,11 +338,12 @@ defmodule Codepagex do
   ## Examples
 
       iex> iso = "Hello æøå!" |> from_string!(:iso_8859_1)
-      iex> to_string!(iso, :ascii, use_utf_replacement)
+      iex> to_string!(iso, :ascii, use_utf_replacement())
       "Hello ���!"
 
   """
-  @spec to_string!(binary, encoding, to_s_missing_outer, term) :: String.t | no_return
+  @spec to_string!(binary, encoding, to_s_missing_outer, term) ::
+    String.t | no_return
   def to_string!(binary, encoding, missing_fun, acc \\ nil) do
     case to_string(binary, encoding, missing_fun, acc) do
       {:ok, result, _} ->
@@ -438,7 +451,8 @@ defmodule Codepagex do
       {:ok, "Hello ###!", 13}
 
   """
-  @spec from_string(binary, encoding, from_s_missing_outer, term) :: {:ok, String.t, integer} | {:error, term, integer}
+  @spec from_string(binary, encoding, from_s_missing_outer, term) ::
+    {:ok, String.t, integer} | {:error, term, integer}
   def from_string(string, encoding, missing_fun, acc \\ nil)
 
   # aliases are forwarded to proper name
@@ -458,7 +472,9 @@ defmodule Codepagex do
     end
   end
 
-  def from_string(string, encoding, missing_fun, acc) when is_binary(encoding) do
+  def from_string(
+    string, encoding, missing_fun, acc
+  ) when is_binary(encoding) do
     try do
       from_string(string, String.to_existing_atom(encoding), missing_fun, acc)
     rescue
@@ -494,7 +510,8 @@ defmodule Codepagex do
       "Hello ___!"
 
   """
-  @spec from_string!(String.t, encoding, from_s_missing_outer, term) :: binary | no_return
+  @spec from_string!(String.t, encoding, from_s_missing_outer, term) ::
+    binary | no_return
   def from_string!(string, encoding, missing_fun, acc \\ nil) do
     case from_string(string, encoding, missing_fun, acc) do
       {:ok, result, _} ->
