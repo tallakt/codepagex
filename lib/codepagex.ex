@@ -6,7 +6,7 @@ defmodule Codepagex do
     |> Enum.reject(&(String.match?(&1, ~r/#.Codepagex/)))
     |> Enum.reject(&(String.match?(&1, ~r/```|Build Status|Documentation Status/)))
     |> Enum.join("\n")
-    )
+  )
 
   require Codepagex.Mappings
   alias Codepagex.Mappings
@@ -30,7 +30,7 @@ defmodule Codepagex do
     Mappings.aliases(:all)
     |> Enum.map(fn {a, m} -> "  | #{inspect(a) |> String.ljust(15)} | #{m} |" end)
     |> Enum.join("\n")
-    )
+  )
 
   @doc """
   Returns a list of shorthand aliases that may be used instead of the full name
@@ -61,12 +61,12 @@ defmodule Codepagex do
     |> Enum.map(&(Enum.join(&1, " | ")))
     |> Enum.map(&("| #{&1} |"))
     |> Enum.join("\n")
-    )
+  )
 
   @encodings_atom (
     Mappings.encoding_list(:all)
     |> Enum.map(&String.to_atom/1)
-    )
+  )
 
   @doc """
   Returns a list of the supported encodings. These are extracted from

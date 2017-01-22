@@ -39,7 +39,7 @@ defmodule Codepagex.Mappings.Helpers do
           res = {:error, _, _} ->
             res
           {:ok, added_string, new_rest, new_outer_acc} ->
-            codepoints = 
+            codepoints =
               for cp <- String.codepoints(added_string) do
                 <<number :: utf8>> = cp
                 number
@@ -92,7 +92,7 @@ defmodule Codepagex.Mappings.Helpers do
   end
 
   def filter_to_selected_encodings(names, filters, aliases) do
-    matching = 
+    matching =
       for n = {k,_} <- names,
           f <- Enum.map(filters, &Map.get(aliases, &1, &1)),
           name_matches?(k, f),
@@ -144,18 +144,18 @@ defmodule Codepagex.Mappings do
     |> Enum.reject(&(String.match?(&1, ~r[VENDORS/MISC/CP1006]i))) # generates warning
     |> Enum.reject(&(String.match?(&1, ~r[NEXT]i))) # generates warning
     |> Enum.reject(&(String.match?(&1, ~r[EBCDIC/CP875]i))) # generates warning
-    )
+  )
 
   @all_names_files (for n <- @all_mapping_files,
       do: {Helpers.name_for_file(n), n}, into: %{})
 
   @filtered_names_files (
     Helpers.filter_to_selected_encodings(
-      @all_names_files, 
+      @all_names_files,
       Application.get_env(:codepagex, :encodings, @default_mapping_filter),
       @all_aliases
-      )
     )
+  )
 
 
   # These are documented in Codepagex.encoding_list/1
@@ -164,7 +164,7 @@ defmodule Codepagex.Mappings do
   def encoding_list(_), do: @filtered_names_files |> Keyword.keys |> Enum.sort
 
   # load mapping files
-  @encodings (for {name, file} <- @filtered_names_files, 
+  @encodings (for {name, file} <- @filtered_names_files,
               do: {name, Codepagex.MappingFile.load(file)})
 
   # define the to_string_xxx for each mapping
