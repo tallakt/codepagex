@@ -1,7 +1,7 @@
 #
 # http://www.unicode.org/Public/MAPPINGS/
 # 0x1B  0x00A0  # ESCAPE TO EXTENSION TABLE (or displayed as NBSP, see note above)
-# 0x1B0A  0x000C  # FORM FEED                                                     
+# 0x1B0A  0x000C  # FORM FEED
 # unicode/ETSI/GSM0338.TXT
 
 

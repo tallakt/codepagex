@@ -55,7 +55,7 @@ defmodule Codepagex.Mixfile do
     [
        {:benchee, "~> 0.2", only: :dev },
        {:earmark, "~> 1.0", only: :dev},
-       {:ex_doc, "~> 0.14", only: :dev}, 
+       {:ex_doc, "~> 0.14", only: :dev},
        {:inch_ex, "~> 0.5", only: :docs},
        {:credo, "~> 0.5", only: [:dev, :test]}
     ]

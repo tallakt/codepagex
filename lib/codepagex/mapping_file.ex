@@ -17,7 +17,7 @@ defmodule Codepagex.MappingFile do
   defp remove_overlapping(enum) do
     enum
     |> Stream.chunk(2, 1, [nil])
-    |> Stream.reject(fn 
+    |> Stream.reject(fn
           [{a, _}, {b, _}] ->
             :binary.longest_common_prefix([a, b]) == byte_size(a)
           _ ->
