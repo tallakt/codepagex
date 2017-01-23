@@ -9,6 +9,8 @@ utf-8. Like iconv, but written in pure Elixir.
 All the encodings are fetched from unicode.org tables and conversion functions
 are generated from these at compile time.
 
+## Note on the unicode built in module
+
 Note that the Erlang built in
 [`unicode` module](http://erlang.org/doc/man/unicode.html#characters_to_binary-1)
 has some provisions for converting between utf-8 and latin1 code sets. If that
