@@ -9,6 +9,20 @@ utf-8. Like iconv, but written in pure Elixir.
 All the encodings are fetched from unicode.org tables and conversion functions
 are generated from these at compile time.
 
+Note that the Erlang built in
+[`unicode` module](http://erlang.org/doc/man/unicode.html#characters_to_binary-1)
+has some provisions for converting between utf-8 and latin1 code sets. If that
+is all you need, you should consider not using `codepagex` but rather rely on this
+simpler alternative.
+
+Compared to this functionality `codepagex` provides:
+
+* More codepage mapping options
+* The ability to handle illegal encoding with custom logic
+* A simpler interface
+
+But please remember that `codepagex` is comparatively a lot more complex, making
+extensive use of macro programming.
 
 ## Examples
 
@@ -107,4 +121,7 @@ The encodings that are known to require very long compile times are:
 - A few encodings are not yet supported for different reasons. In particular
   the asian and arab ones with left-right and up-down variations.
 - Test Elixir function specs
+- Benchmarking vs `iconv` native libraries
+- Support for iodata
+
 
