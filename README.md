@@ -124,6 +124,12 @@ The encodings that are known to require very long compile times are:
   the asian and arab ones with left-right and up-down variations.
 - Test Elixir function specs
 - Benchmarking vs `iconv` native libraries
-- Support for iodata
+- Support for iolists
+- when converting sections of a string that are unchanged, return the original
+  input. Consider using iolists to return the values so that chunks may be
+  saved continuously
+- lazy converter to get n characters / codepoints
+- function to drop n characters and take n characters (and slice?)
+
 
 
