@@ -214,6 +214,12 @@ defmodule Codepagex do
   end
 
 
+  def to_iodata(binary, encoding) do
+    to_iodata(binary, encoding, error_on_missing())
+    |> strip_acc
+  end
+
+
   @doc """
   Convert a binary in a specified encoding into an Elixir string in utf-8
   encoding
@@ -309,6 +315,33 @@ defmodule Codepagex do
   def to_string(binary, encoding, missing_fun, acc) when is_binary(encoding) do
     try do
       to_string(binary, String.to_existing_atom(encoding), missing_fun, acc)
+    rescue
+      ArgumentError ->
+        {:error, "Unknown encoding #{inspect encoding}", acc}
+    end
+  end
+
+  def to_iodata(binary, encoding, missing_fun, acc \\ nil)
+
+  # create a forwarding to_iodata implementation for each alias
+  for {aliaz, encoding} <- Mappings.aliases do
+    def to_iodata(binary, unquote(aliaz), missing_fun, acc) do
+      to_iodata(binary, unquote(encoding |> String.to_atom), missing_fun, acc)
+    end
+  end
+
+  def to_iodata(binary, encoding, missing_fun, acc) when is_atom(encoding) do
+    case missing_fun.(encoding) do
+      {:ok, inner_fun} ->
+        Mappings.to_iodata(binary, encoding, inner_fun, acc)
+      err ->
+        err
+    end
+  end
+
+  def to_iodata(binary, encoding, missing_fun, acc) when is_binary(encoding) do
+    try do
+      to_iodata(binary, String.to_existing_atom(encoding), missing_fun, acc)
     rescue
       ArgumentError ->
         {:error, "Unknown encoding #{inspect encoding}", acc}

@@ -23,6 +23,10 @@ defmodule CodepagexTest do
     assert Codepagex.to_string(@iso_hello, "ISO8859/8859-1") == {:ok, "hello æøå"}
   end
 
+  test "to_iodata should reuse characters in original string" do
+    assert {:ok, ["hello", _] } = Codepagex.to_iodata(@iso_hello, "ISO8859/8859-1")
+  end
+
   test "to_string should work for alias :iso_8859_1" do
     assert Codepagex.to_string(@iso_hello, :iso_8859_1) == {:ok, "hello æøå"}
   end

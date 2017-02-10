@@ -58,6 +58,48 @@ defmodule Codepagex.Mappings.Helpers do
     end
   end
 
+  defmacro def_to_iodata(name, encoding) do
+    quote(bind_quoted: [n: name, e: encoding], unquote: false) do
+      alias Codepagex.Mappings.Helpers
+      fn_name = Helpers.function_name_for_mapping_name("to_iodata", n)
+
+      for encoding_point <- e do
+        case encoding_point do
+          {from, to} ->
+            def unquote(fn_name)(
+              unquote(from) <> rest, acc, missing_fun, outer_acc
+            ) do
+              unquote(fn_name)(
+                rest, [acc, <<unquote(to) :: utf8>>], missing_fun, outer_acc
+              )
+            end
+        end
+      end
+
+      def unquote(fn_name)("", acc, _, outer_acc) do
+        result = IO.iodata_to_binary acc
+        {:ok, result, outer_acc}
+      end
+
+      def unquote(fn_name)(rest, acc, missing_fun, outer_acc) do
+        case missing_fun.(rest, outer_acc) do
+          res = {:error, _, _} ->
+            res
+          {:ok, added_string, new_rest, new_outer_acc} ->
+            codepoints =
+              for cp <- String.codepoints(added_string) do
+                <<number :: utf8>> = cp
+                number
+              end
+              |> Enum.reverse
+            unquote(fn_name)(
+              new_rest, codepoints ++ acc, missing_fun, new_outer_acc
+            )
+        end
+      end
+    end
+  end
+
   defmacro def_from_string(name, encoding) do
     quote(bind_quoted: [n: name, e: encoding], unquote: false) do
       alias Codepagex.Mappings.Helpers
@@ -194,6 +236,21 @@ defmodule Codepagex.Mappings do
   end
 
   def to_string(_, encoding, _, acc) do
+    {:error, "Unknown encoding #{inspect encoding}", acc}
+  end
+
+  # define the to_iodata for each mapping
+  for {n, m} <- @encodings, do: Helpers.def_to_iodata(n, m)
+
+  # define methods to forward to_iodata(...) to a specific implementation
+  for {name, _} <- @encodings do
+    fun_name = Helpers.function_name_for_mapping_name("to_iodata", name)
+    def to_iodata(binary, unquote(name |> String.to_atom), missing_fun, acc) do
+      unquote(fun_name)(binary, [], missing_fun, acc)
+    end
+  end
+
+  def to_iodata(_, encoding, _, acc) do
     {:error, "Unknown encoding #{inspect encoding}", acc}
   end
 

@@ -15,6 +15,7 @@ defmodule Mix.Tasks.Codepagex.Benchee do
     Benchee.run %{time: 3},
       ascii_to_string: &ascii_to_string/0,
       iso_to_string: &iso_to_string/0,
+      iso_to_iodata: &iso_to_iodata/0,
       ascii_from_string: &ascii_from_string/0,
       iso_from_string: &iso_from_string/0
   end
@@ -25,6 +26,10 @@ defmodule Mix.Tasks.Codepagex.Benchee do
 
   defp iso_to_string do
     for _ <- 1..1000, do: to_string(@iso, :iso_8859_1)
+  end
+
+  defp iso_to_iodata do
+    for _ <- 1..1000, do: to_iodata(@iso, :iso_8859_1)
   end
 
   defp ascii_from_string do
