@@ -110,6 +110,14 @@ full encoding name, eg:
     ]
 ```
 
+After modifying the encodings list in the configuration, always make sure to run the following or the encodings you specified will not be compiled in:
+
+```bash
+mix deps.compile codepagex --force
+```
+
+This is necessary due to the fact that `Codepagex`'s configuration changes are not picked up automatically when it's a dependency in another project. Credit for the find goes to @michalmuskala here: https://elixirforum.com/t/sharing-with-the-community-text-transcoding-libraries/17962/2
+
 The encodings that are known to require very long compile times are:
 
 - VENDORS/MISC/KPS9566
