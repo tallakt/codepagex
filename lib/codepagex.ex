@@ -67,7 +67,7 @@ defmodule Codepagex do
     # format as table with 3 columns
     Mappings.encoding_list(:all)
     |> Enum.map(&(String.pad_trailing(&1, 30)))
-    |> Enum.chunk(3, 3, ["", ""])
+    |> Enum.chunk_every(3, 3, ["", ""])
     |> Enum.map(&(Enum.join(&1, " | ")))
     |> Enum.map(&("| #{&1} |"))
     |> Enum.join("\n")
