@@ -176,7 +176,7 @@ defmodule Codepagex.Mappings do
   # These are documented in Codepagex.encoding_list/1
   def encoding_list(selection \\ nil)
   def encoding_list(:all), do: @all_names_files |> Map.keys |> Enum.sort
-  def encoding_list(_), do: @filtered_names_files |> Keyword.keys |> Enum.sort
+  def encoding_list(_), do: @filtered_names_files |> Enum.into(%{}) |> Map.keys |> Enum.sort
 
   # load mapping files
   @encodings (for {name, file} <- @filtered_names_files,
