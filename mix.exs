@@ -20,18 +20,18 @@ defmodule Codepagex.Mixfile do
   # Configuration for the OTP application
   #
   # Type `mix help compile.app` for more information
-  def application do
+  def application() do
     [applications: [:logger]]
   end
 
-  defp description do
+  defp description() do
     """
     Codepagex is an  elixir library to convert between string encodings to and
     from utf-8. Like iconv, but written in pure Elixir.
     """
   end
 
-  defp package do
+  defp package() do
     [
       files: ["lib", "mix.exs", "README*", "LICENSE*", "unicode"],
       contributors: ["Tallak Tveide"],
@@ -52,13 +52,13 @@ defmodule Codepagex.Mixfile do
   #   {:mydep, git: "https://github.com/elixir-lang/mydep.git", tag: "0.1.0"}
   #
   # Type `mix help deps` for more examples and options
-  defp deps do
+  defp deps() do
     [
-       {:benchee, "~> 0.2", only: :dev },
-       {:earmark, "~> 1.0", only: :dev},
-       {:ex_doc, "~> 0.14", only: :dev},
-       {:inch_ex, "~> 0.5", only: :docs},
-       {:credo, "~> 0.5", only: [:dev, :test]}
+       {:benchee, "~> 1.0", only: :dev },
+       {:earmark, "~> 1.4", only: :dev},
+       {:ex_doc, "~> 0.22", only: :dev},
+       {:inch_ex, "~> 2.0", only: :docs},
+       {:credo, "~> 1.4", only: [:dev, :test]}
     ]
   end
 end
