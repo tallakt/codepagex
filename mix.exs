@@ -2,18 +2,19 @@ defmodule Codepagex.Mixfile do
   use Mix.Project
 
   def project do
-    [app: :codepagex,
-     version: "0.1.5",
-     elixir: "~> 1.5",
-     name: "Codepagex",
-     description: description(),
-     package: package(),
-     source_url: "https://github.com/tallakt/codepagex",
-     build_embedded: Mix.env == :prod,
-     start_permanent: Mix.env == :prod,
-     deps: deps(),
-     aliases: [],
-     docs: [main: Codepagex]
+    [
+      app: :codepagex,
+      version: "0.1.5",
+      elixir: "~> 1.5",
+      name: "Codepagex",
+      description: description(),
+      package: package(),
+      source_url: "https://github.com/tallakt/codepagex",
+      build_embedded: Mix.env() == :prod,
+      start_permanent: Mix.env() == :prod,
+      deps: deps(),
+      aliases: [],
+      docs: [main: Codepagex]
     ]
   end
 
@@ -54,11 +55,11 @@ defmodule Codepagex.Mixfile do
   # Type `mix help deps` for more examples and options
   defp deps() do
     [
-      {:benchee, "~> 1.0", only: :dev },
+      {:benchee, "~> 1.0", only: :dev},
       {:earmark, "~> 1.4", only: :dev},
       {:ex_doc, "~> 0.22", only: :dev},
       {:inch_ex, "~> 2.0", only: :docs},
-      {:credo, "~> 1.4", only: :dev},
+      {:credo, "~> 1.4", only: :dev}
     ]
   end
 end

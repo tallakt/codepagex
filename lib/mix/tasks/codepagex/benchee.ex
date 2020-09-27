@@ -18,6 +18,7 @@ defmodule Mix.Tasks.Codepagex.Benchee do
       ascii_from_string: &ascii_from_string/0,
       iso_from_string: &iso_from_string/0
     }
+
     Benchee.run(tests, time: 3, memory_time: 2)
   end
 

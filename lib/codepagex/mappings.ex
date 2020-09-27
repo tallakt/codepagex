@@ -11,7 +11,8 @@ defmodule Codepagex.Mappings.Helpers do
     mapping_part =
       mapping_name
       |> String.replace(~r|[-/]|, "_")
-      |> String.downcase
+      |> String.downcase()
+
     :"#{prefix}_#{mapping_part}"
   end
 
@@ -24,18 +25,24 @@ defmodule Codepagex.Mappings.Helpers do
         case encoding_point do
           {from, to} ->
             def unquote(fn_name)(
-              unquote(from) <> rest, acc, missing_fun, outer_acc
-            ) do
+                  unquote(from) <> rest,
+                  acc,
+                  missing_fun,
+                  outer_acc
+                ) do
               unquote(fn_name)(
-                rest, [unquote(to) | acc], missing_fun, outer_acc
+                rest,
+                [unquote(to) | acc],
+                missing_fun,
+                outer_acc
               )
             end
         end
       end
 
       def unquote(fn_name)("", acc, _, outer_acc) do
-        rev = acc |> :lists.reverse
-        result = for code_point <- rev, into: "", do: <<code_point :: utf8>>
+        rev = acc |> :lists.reverse()
+        result = for code_point <- rev, into: "", do: <<code_point::utf8>>
         {:ok, result, outer_acc}
       end
 
@@ -43,15 +50,20 @@ defmodule Codepagex.Mappings.Helpers do
         case missing_fun.(rest, outer_acc) do
           res = {:error, _, _} ->
             res
+
           {:ok, added_string, new_rest, new_outer_acc} ->
             codepoints =
               for cp <- String.codepoints(added_string) do
-                <<number :: utf8>> = cp
+                <<number::utf8>> = cp
                 number
               end
-              |> Enum.reverse
+              |> Enum.reverse()
+
             unquote(fn_name)(
-              new_rest, codepoints ++ acc, missing_fun, new_outer_acc
+              new_rest,
+              codepoints ++ acc,
+              missing_fun,
+              new_outer_acc
             )
         end
       end
@@ -67,15 +79,18 @@ defmodule Codepagex.Mappings.Helpers do
         case encoding_point do
           {from, to} ->
             def unquote(fn_name)(
-              << unquote(to) :: utf8 >> <> rest, acc, fun, outer_acc
-            ) do
+                  <<unquote(to)::utf8>> <> rest,
+                  acc,
+                  fun,
+                  outer_acc
+                ) do
               unquote(fn_name)(rest, [unquote(from) | acc], fun, outer_acc)
             end
         end
       end
 
       def unquote(fn_name)("", acc, _, outer_acc) do
-        rev = acc |> :lists.reverse
+        rev = acc |> :lists.reverse()
         result = for chars <- rev, into: "", do: chars
         {:ok, result, outer_acc}
       end
@@ -84,6 +99,7 @@ defmodule Codepagex.Mappings.Helpers do
         case missing_fun.(rest, outer_acc) do
           res = {:error, _, _} ->
             res
+
           {:ok, added_binary, new_rest, new_outer_acc} ->
             new_acc = [added_binary | acc]
             unquote(fn_name)(new_rest, new_acc, missing_fun, new_outer_acc)
@@ -93,8 +109,8 @@ defmodule Codepagex.Mappings.Helpers do
   end
 
   defp name_matches?(name, filter) do
-    if Regex.regex? filter do
-      Regex.match? filter, name
+    if Regex.regex?(filter) do
+      Regex.match?(filter, name)
     else
       name == to_string(filter)
     end
@@ -108,8 +124,8 @@ defmodule Codepagex.Mappings.Helpers do
           do: n
 
     matching
-    |> Enum.sort
-    |> Enum.uniq
+    |> Enum.sort()
+    |> Enum.uniq()
   end
 end
 
@@ -124,7 +140,6 @@ defmodule Codepagex.Mappings do
   @ascii_alias [{:ascii, "VENDORS/MISC/US-ASCII-QUOTES"}]
   @all_aliases (@iso_aliases ++ @ascii_alias) |> Enum.into(%{})
 
-
   def aliases(selection \\ nil)
 
   def aliases(:all), do: @all_aliases
@@ -132,8 +147,8 @@ defmodule Codepagex.Mappings do
   def aliases(_) do
     aliases(:all)
     |> Enum.filter(fn {_, e} ->
-        Enum.member?(Codepagex.Mappings.encoding_list(:configured), e)
-      end)
+      Enum.member?(Codepagex.Mappings.encoding_list(:configured), e)
+    end)
     |> Enum.into(%{})
   end
 
@@ -141,46 +156,39 @@ defmodule Codepagex.Mappings do
   @mapping_folder Path.join([__DIR__] ++ ~w(.. .. unicode))
   @default_mapping_filter [:ascii, ~r[iso8859]i]
 
+  @all_mapping_files @mapping_folder
+                     |> Path.join(Path.join(~w(** *.TXT)))
+                     |> Path.wildcard()
+                     |> Enum.reject(&String.match?(&1, ~r[README]i))
+                     # lots of weird stuff
+                     |> Enum.reject(&String.match?(&1, ~r[VENDORS/APPLE]i))
+                     # seems useless, other format
+                     |> Enum.reject(&String.match?(&1, ~r[MISC/IBMGRAPH]i))
+                     # generates warnings
+                     |> Enum.reject(&String.match?(&1, ~r[VENDORS/MISC/APL-ISO-IR-68]i))
+                     # generates warnings
+                     |> Enum.reject(&String.match?(&1, ~r[VENDORS/MISC/CP1006]i))
+                     # generates warnings
+                     |> Enum.reject(&String.match?(&1, ~r[NEXT]i))
+                     # generates warnings
+                     |> Enum.reject(&String.match?(&1, ~r[EBCDIC/CP875]i))
 
-  @all_mapping_files (
-    @mapping_folder
-    |> Path.join(Path.join(~w(** *.TXT)))
-    |> Path.wildcard
-    |> Enum.reject(&(String.match?(&1, ~r[README]i)))
-    # lots of weird stuff
-    |> Enum.reject(&(String.match?(&1, ~r[VENDORS/APPLE]i)))
-    # seems useless, other format
-    |> Enum.reject(&(String.match?(&1, ~r[MISC/IBMGRAPH]i)))
-    # generates warnings
-    |> Enum.reject(&(String.match?(&1, ~r[VENDORS/MISC/APL-ISO-IR-68]i)))
-    # generates warnings
-    |> Enum.reject(&(String.match?(&1, ~r[VENDORS/MISC/CP1006]i)))
-    # generates warnings
-    |> Enum.reject(&(String.match?(&1, ~r[NEXT]i)))
-    # generates warnings
-    |> Enum.reject(&(String.match?(&1, ~r[EBCDIC/CP875]i)))
-  )
+  @all_names_files for n <- @all_mapping_files, do: {Helpers.name_for_file(n), n}, into: %{}
 
-  @all_names_files (for n <- @all_mapping_files,
-      do: {Helpers.name_for_file(n), n}, into: %{})
-
-  @filtered_names_files (
-    Helpers.filter_to_selected_encodings(
-      @all_names_files,
-      Application.get_env(:codepagex, :encodings, @default_mapping_filter),
-      @all_aliases
-    )
-  )
-
+  @filtered_names_files Helpers.filter_to_selected_encodings(
+                          @all_names_files,
+                          Application.get_env(:codepagex, :encodings, @default_mapping_filter),
+                          @all_aliases
+                        )
 
   # These are documented in Codepagex.encoding_list/1
   def encoding_list(selection \\ nil)
-  def encoding_list(:all), do: @all_names_files |> Map.keys |> Enum.sort
-  def encoding_list(_), do: @filtered_names_files |> Enum.into(%{}) |> Map.keys |> Enum.sort
+  def encoding_list(:all), do: @all_names_files |> Map.keys() |> Enum.sort()
+  def encoding_list(_), do: @filtered_names_files |> Enum.into(%{}) |> Map.keys() |> Enum.sort()
 
   # load mapping files
-  @encodings (for {name, file} <- @filtered_names_files,
-              do: {name, Codepagex.MappingFile.load(file)})
+  @encodings for {name, file} <- @filtered_names_files,
+                 do: {name, Codepagex.MappingFile.load(file)}
 
   # define the to_string_xxx for each mapping
   for {n, m} <- @encodings, do: Helpers.def_to_string(n, m)
@@ -188,13 +196,14 @@ defmodule Codepagex.Mappings do
   # define methods to forward to_string(...) to a specific implementation
   for {name, _} <- @encodings do
     fun_name = Helpers.function_name_for_mapping_name("to_string", name)
-    def to_string(binary, unquote(name |> String.to_atom), missing_fun, acc) do
+
+    def to_string(binary, unquote(name |> String.to_atom()), missing_fun, acc) do
       unquote(fun_name)(binary, [], missing_fun, acc)
     end
   end
 
   def to_string(_, encoding, _, acc) do
-    {:error, "Unknown encoding #{inspect encoding}", acc}
+    {:error, "Unknown encoding #{inspect(encoding)}", acc}
   end
 
   # define the from_string_xxx for each encoding
@@ -203,15 +212,18 @@ defmodule Codepagex.Mappings do
   # define methods to forward from_string(...) to a specific implementation
   for {name, _} <- @encodings do
     fun_name = Helpers.function_name_for_mapping_name("from_string", name)
+
     def from_string(
-      string, unquote(name |> String.to_atom), missing_fun, acc
-    ) do
+          string,
+          unquote(name |> String.to_atom()),
+          missing_fun,
+          acc
+        ) do
       unquote(fun_name)(string, [], missing_fun, acc)
     end
   end
 
   def from_string(_, encoding, _, acc) do
-    {:error, "Unknown encoding #{inspect encoding}", acc}
+    {:error, "Unknown encoding #{inspect(encoding)}", acc}
   end
 end
-

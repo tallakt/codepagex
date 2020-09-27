@@ -20,7 +20,6 @@ defmodule Mix.Tasks.Codepagex.Unicode do
 
   """
 
-
   @ftp "ftp://ftp.unicode.org/Public/MAPPINGS/"
 
   @ignore ~w(
@@ -32,12 +31,8 @@ defmodule Mix.Tasks.Codepagex.Unicode do
 
   # note: other files are downloaded, but are in unicode/.gitignore
 
-
   @shortdoc "Download source code files from unicode.org"
   def run(_) do
-    Mix.shell.cmd(
-      "wget -nH --cut-dirs=2 -r -P unicode -nv -X #{@ignore} #{@ftp}"
-    )
+    Mix.shell().cmd("wget -nH --cut-dirs=2 -r -P unicode -nv -X #{@ignore} #{@ftp}")
   end
 end
-
