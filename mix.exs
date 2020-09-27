@@ -4,7 +4,7 @@ defmodule Codepagex.Mixfile do
   def project do
     [app: :codepagex,
      version: "0.1.4",
-     elixir: "~> 1.0",
+     elixir: "~> 1.5",
      name: "Codepagex",
      description: description(),
      package: package(),
@@ -54,10 +54,11 @@ defmodule Codepagex.Mixfile do
   # Type `mix help deps` for more examples and options
   defp deps() do
     [
-       {:benchee, "~> 1.0", only: :dev },
-       {:earmark, "~> 1.4", only: :dev},
-       {:ex_doc, "~> 0.22", only: :dev},
-       {:inch_ex, "~> 2.0", only: :docs},
+      {:benchee, "~> 1.0", only: :dev },
+      {:earmark, "~> 1.4", only: :dev},
+      {:ex_doc, "~> 0.22", only: :dev},
+      {:inch_ex, "~> 2.0", only: :docs},
+      {:credo, "~> 1.4", only: :dev},
     ]
   end
 end

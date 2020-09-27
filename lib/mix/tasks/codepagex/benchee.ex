@@ -12,11 +12,13 @@ defmodule Mix.Tasks.Codepagex.Benchee do
 
   @shortdoc "Run codepagex benchmarks"
   def run(_) do
-    Benchee.run %{time: 3},
+    tests = %{
       ascii_to_string: &ascii_to_string/0,
       iso_to_string: &iso_to_string/0,
       ascii_from_string: &ascii_from_string/0,
       iso_from_string: &iso_from_string/0
+    }
+    Benchee.run(tests, time: 3, memory_time: 2)
   end
 
   defp ascii_to_string do
