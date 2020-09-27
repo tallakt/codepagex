@@ -58,7 +58,6 @@ defmodule Codepagex.Mixfile do
        {:earmark, "~> 1.4", only: :dev},
        {:ex_doc, "~> 0.22", only: :dev},
        {:inch_ex, "~> 2.0", only: :docs},
-       {:credo, "~> 1.4", only: [:dev, :test]}
     ]
   end
 end
