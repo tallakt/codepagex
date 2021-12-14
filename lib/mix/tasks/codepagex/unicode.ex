@@ -2,7 +2,7 @@ defmodule Mix.Tasks.Codepagex.Unicode do
   use Mix.Task
 
   @moduledoc """
-    This mix task wil download the source mapping files from http://unicode.org
+    This mix task will download the source mapping files from http://unicode.org
 
     The files should already be present in the git repository, but if necessary,
     this mix task may be run to refresh them.
