@@ -108,13 +108,8 @@ defmodule Codepagex.Mappings.Helpers do
     end
   end
 
-  defp name_matches?(name, filter) do
-    if Regex.regex?(filter) do
-      Regex.match?(filter, name)
-    else
-      name == to_string(filter)
-    end
-  end
+  defp name_matches?(name, %Regex{} = filter), do: Regex.match?(filter, name)
+  defp name_matches?(name, filter), do: name == to_string(filter)
 
   def filter_to_selected_encodings(names, filters, aliases) do
     matching =
@@ -177,7 +172,7 @@ defmodule Codepagex.Mappings do
 
   @filtered_names_files Helpers.filter_to_selected_encodings(
                           @all_names_files,
-                          Application.get_env(:codepagex, :encodings, @default_mapping_filter),
+                          Application.compile_env(:codepagex, :encodings, @default_mapping_filter),
                           @all_aliases
                         )
 
