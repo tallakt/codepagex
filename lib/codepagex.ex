@@ -1,5 +1,5 @@
 defmodule Codepagex do
-  # unfortunately exdoc doesnt support ``` fenced blocks
+  # unfortunately exdoc doesn't support ``` fenced blocks
   @moduledoc File.read!("README.md")
              |> String.split("\n")
              |> Enum.reject(&String.match?(&1, ~r/#.Codepagex/))
@@ -208,7 +208,7 @@ defmodule Codepagex do
 
   Compared to `to_string/2`, you may pass a `missing_fun` function parameter to
   handle encoding errors in the `binary`.  The function `use_utf_replacement/0`
-  may be used as a default error handling machanism.
+  may be used as a default error handling mechanism.
 
   ## Implementing missing_fun
 
@@ -373,7 +373,7 @@ defmodule Codepagex do
 
   Compared to `from_string/2`, you may pass a `missing_fun` function parameter
   to handle encoding errors in `string`. The function `replace_nonexistent/1`
-  may be used as a default error handling machanism.
+  may be used as a default error handling mechanism.
 
   The `encoding` parameter should be in `encoding_list/0` as an atom or String,
   or in `aliases/0`.
