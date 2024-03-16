@@ -17,7 +17,7 @@ defmodule Codepagex.Mappings.Helpers do
   end
 
   defmacro def_to_string(name, encoding) do
-    quote(bind_quoted: [n: name, e: encoding], unquote: false) do
+    quote(bind_quoted: [n: name, e: encoding], generated: true, unquote: false) do
       alias Codepagex.Mappings.Helpers
       fn_name = Helpers.function_name_for_mapping_name("to_string", n)
 
@@ -71,7 +71,7 @@ defmodule Codepagex.Mappings.Helpers do
   end
 
   defmacro def_from_string(name, encoding) do
-    quote(bind_quoted: [n: name, e: encoding], unquote: false) do
+    quote(bind_quoted: [n: name, e: encoding], generated: true, unquote: false) do
       alias Codepagex.Mappings.Helpers
       fn_name = Helpers.function_name_for_mapping_name("from_string", n)
 
@@ -172,7 +172,11 @@ defmodule Codepagex.Mappings do
 
   @filtered_names_files Helpers.filter_to_selected_encodings(
                           @all_names_files,
-                          Application.compile_env(:codepagex, :encodings, @default_mapping_filter),
+                          Application.compile_env(
+                            :codepagex,
+                            :encodings,
+                            @default_mapping_filter
+                          ),
                           @all_aliases
                         )
 
@@ -182,8 +186,18 @@ defmodule Codepagex.Mappings do
   def encoding_list(_), do: @filtered_names_files |> Enum.into(%{}) |> Map.keys() |> Enum.sort()
 
   # load mapping files
-  @encodings for {name, file} <- @filtered_names_files,
-                 do: {name, Codepagex.MappingFile.load(file)}
+  @encodings Enum.flat_map(
+               Task.async_stream(
+                 @filtered_names_files,
+                 fn {name, file} -> {name, Codepagex.MappingFile.load(file)} end,
+                 ordered: false,
+                 timeout: :infinity
+               ),
+               fn
+                 {:ok, val} -> [val]
+                 _else -> []
+               end
+             )
 
   # define the to_string_xxx for each mapping
   for {n, m} <- @encodings, do: Helpers.def_to_string(n, m)

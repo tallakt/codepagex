@@ -7,11 +7,20 @@ defmodule Codepagex.MappingFile do
   @re ~r/^0x(([[:xdigit:]]{2})+)\s*\t+(0x(([[:xdigit:]]{2})+)\s*\t+)?#/
 
   def load(filename) do
-    File.stream!(filename)
+    filename
+    |> File.stream!()
     |> Stream.with_index()
-    |> Stream.map(&parse_line(&1, filename))
-    |> Stream.filter(& &1)
-    |> remove_overlapping
+    |> Task.async_stream(
+      &parse_line(&1, filename),
+      ordered: true,
+      timeout: :infinity
+    )
+    |> Stream.filter(fn
+      {:ok, val} -> val
+      _else -> false
+    end)
+    |> Stream.map(fn {:ok, val} -> val end)
+    |> remove_overlapping()
     |> Enum.reverse()
   end
 
