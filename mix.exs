@@ -37,7 +37,7 @@ defmodule Codepagex.Mixfile do
       files: ["lib", "mix.exs", "README*", "LICENSE*", "unicode"],
       contributors: ["Tallak Tveide"],
       maintainers: ["Tallak Tveide"],
-      licenses: ["Apache 2.0"],
+      licenses: ["Apache-2.0"],
       links: %{
         "GitHub" => "https://github.com/tallakt/codepagex"
       }
