@@ -1,28 +1,28 @@
-defmodule Codepagex.Mixfile do
+defmodule Codepagex.MixProject do
   use Mix.Project
 
   def project do
     [
       app: :codepagex,
       version: "0.1.8",
-      elixir: "~> 1.5",
+      elixir: "~> 1.16",
       name: "Codepagex",
       description: description(),
       package: package(),
       source_url: "https://github.com/tallakt/codepagex",
-      build_embedded: Mix.env() == :prod,
-      start_permanent: Mix.env() == :prod,
       deps: deps(),
       aliases: [],
-      docs: [main: Codepagex]
+      docs: [main: Codepagex],
+      start_permanent: Mix.env() == :prod,
+      deps: deps(),
     ]
   end
 
-  # Configuration for the OTP application
-  #
-  # Type `mix help compile.app` for more information
-  def application() do
-    [applications: [:logger]]
+  # Run "mix help compile.app" to learn about applications.
+  def application do
+    [
+      extra_applications: [:logger]
+    ]
   end
 
   defp description() do
@@ -30,6 +30,16 @@ defmodule Codepagex.Mixfile do
     Codepagex is an  elixir library to convert between string encodings to and
     from utf-8. Like iconv, but written in pure Elixir.
     """
+  end
+
+  # Run "mix help deps" to learn about dependencies.
+  defp deps do
+    [
+      {:ex_doc, "~> 0.33", only: :dev},
+      {:benchee, "~> 1.3", only: :dev},
+      {:inch_ex, "~> 2.0", only: :dev},
+      {:credo, "~> 1.7", only: :dev},
+    ]
   end
 
   defp package() do
@@ -41,26 +51,6 @@ defmodule Codepagex.Mixfile do
       links: %{
         "GitHub" => "https://github.com/tallakt/codepagex"
       }
-    ]
-  end
-
-  # Dependencies can be Hex packages:
-  #
-  #   {:mydep, "~> 0.3.0"}
-  #
-  # Or git/path repositories:
-  #
-  #   {:mydep, git: "https://github.com/elixir-lang/mydep.git", tag: "0.1.0"}
-  #
-  # Type `mix help deps` for more examples and options
-  defp deps() do
-    [
-      {:benchee, "~> 1.3", only: :dev},
-      {:earmark, "~> 1.4", only: :dev},
-      {:ex_doc, "~> 0.31", only: :dev},
-      {:inch_ex, "~> 2.0", only: :docs},
-      {:credo, "~> 1.7", only: :dev},
-      {:makeup, "~> 1.1", [env: :prod, hex: "makeup", only: :docs, repo: "hexpm"]}
     ]
   end
 end
