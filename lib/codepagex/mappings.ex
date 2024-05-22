@@ -172,7 +172,11 @@ defmodule Codepagex.Mappings do
 
   @filtered_names_files Helpers.filter_to_selected_encodings(
                           @all_names_files,
-                          Application.compile_env(:codepagex, :encodings, @default_mapping_filter),
+                          Application.compile_env(
+                            :codepagex,
+                            :encodings,
+                            @default_mapping_filter
+                          ),
                           @all_aliases
                         )
 

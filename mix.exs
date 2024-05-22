@@ -15,7 +15,7 @@ defmodule Codepagex.MixProject do
       docs: [main: Codepagex],
       start_permanent: Mix.env() == :prod,
       deps: deps(),
-      elixirc_paths: elixirc_paths(Mix.env()),
+      elixirc_paths: elixirc_paths(Mix.env())
     ]
   end
 
@@ -39,7 +39,7 @@ defmodule Codepagex.MixProject do
       {:ex_doc, "~> 0.33", only: :dev},
       {:benchee, "~> 1.3", only: :dev},
       {:inch_ex, "~> 2.0", only: :dev},
-      {:credo, "~> 1.7", only: :dev},
+      {:credo, "~> 1.7", only: :dev}
     ]
   end
 
