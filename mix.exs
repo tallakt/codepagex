@@ -15,6 +15,7 @@ defmodule Codepagex.MixProject do
       docs: [main: Codepagex],
       start_permanent: Mix.env() == :prod,
       deps: deps(),
+      elixirc_paths: elixirc_paths(Mix.env()),
     ]
   end
 
@@ -52,5 +53,12 @@ defmodule Codepagex.MixProject do
         "GitHub" => "https://github.com/tallakt/codepagex"
       }
     ]
+  end
+
+  def elixirc_paths(env) do
+    case env do
+      :dev -> ["lib", "dev"]
+      _ -> ["lib"]
+    end
   end
 end
