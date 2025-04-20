@@ -186,8 +186,18 @@ defmodule Codepagex.Mappings do
   def encoding_list(_), do: @filtered_names_files |> Enum.into(%{}) |> Map.keys() |> Enum.sort()
 
   # load mapping files
-  @encodings for {name, file} <- @filtered_names_files,
-                 do: {name, Codepagex.MappingFile.load(file)}
+  @encodings Enum.flat_map(
+               Task.async_stream(
+                 @filtered_names_files,
+                 fn {name, file} -> {name, Codepagex.MappingFile.load(file)} end,
+                 ordered: false,
+                 timeout: :infinity
+               ),
+               fn
+                 {:ok, val} -> [val]
+                 _else -> []
+               end
+             )
 
   # define the to_string_xxx for each mapping
   for {n, m} <- @encodings, do: Helpers.def_to_string(n, m)
