@@ -4,7 +4,7 @@ defmodule Codepagex.MixProject do
   def project do
     [
       app: :codepagex,
-      version: "0.1.9",
+      version: "0.1.10",
       elixir: "~> 1.16",
       name: "Codepagex",
       description: description(),
@@ -36,8 +36,8 @@ defmodule Codepagex.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:ex_doc, "~> 0.33", only: :dev},
-      {:benchee, "~> 1.3", only: :dev},
+      {:ex_doc, "~> 0.37", only: :dev},
+      {:benchee, "~> 1.4", only: :dev},
       {:inch_ex, "~> 2.0", only: :dev},
       {:credo, "~> 1.7", only: :dev}
     ]
