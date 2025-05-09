@@ -1,117 +1,3 @@
-defmodule Codepagex.Mappings.Helpers do
-  @moduledoc false
-
-  def name_for_file(filename) do
-    ~r"unicode/(.*)\.txt$"i
-    |> Regex.run(filename)
-    |> Enum.at(1)
-  end
-
-  def function_name_for_mapping_name(prefix, mapping_name) do
-    mapping_part =
-      mapping_name
-      |> String.replace(~r|[-/]|, "_")
-      |> String.downcase()
-
-    :"#{prefix}_#{mapping_part}"
-  end
-
-  defmacro def_to_string(name, encoding) do
-    quote(bind_quoted: [n: name, e: encoding], generated: true, unquote: false) do
-      alias Codepagex.Mappings.Helpers
-      fn_name = Helpers.function_name_for_mapping_name("to_string", n)
-
-      for encoding_point <- e do
-        case encoding_point do
-          {from, to} ->
-            defp unquote(fn_name)(
-                  unquote(from) <> rest,
-                  acc,
-                  missing_fun,
-                  outer_acc
-                ) do
-              unquote(fn_name)(
-                rest,
-                acc <> <<unquote(to)::utf8>>,
-                missing_fun,
-                outer_acc
-              )
-            end
-        end
-      end
-
-      defp unquote(fn_name)("", result, _, outer_acc) do
-        {:ok, result, outer_acc}
-      end
-
-      defp unquote(fn_name)(rest, acc, missing_fun, outer_acc) do
-        case missing_fun.(rest, outer_acc) do
-          res = {:error, _, _} ->
-            res
-
-          {:ok, codepoints, new_rest, new_outer_acc} ->
-            unquote(fn_name)(
-              new_rest,
-               acc <> codepoints,
-              missing_fun,
-              new_outer_acc
-            )
-        end
-      end
-    end
-  end
-
-  defmacro def_from_string(name, encoding) do
-    quote(bind_quoted: [n: name, e: encoding], generated: true, unquote: false) do
-      alias Codepagex.Mappings.Helpers
-      fn_name = Helpers.function_name_for_mapping_name("from_string", n)
-
-      for encoding_point <- e do
-        case encoding_point do
-          {from, to} ->
-            defp unquote(fn_name)(
-                  <<unquote(to)::utf8>> <> rest,
-                  acc,
-                  fun,
-                  outer_acc
-                ) do
-              unquote(fn_name)(rest, acc <> unquote(from), fun, outer_acc)
-            end
-        end
-      end
-
-      defp unquote(fn_name)("", result, _, outer_acc) do
-        {:ok, result, outer_acc}
-      end
-
-      defp unquote(fn_name)(rest, acc, missing_fun, outer_acc) do
-        case missing_fun.(rest, outer_acc) do
-          res = {:error, _, _} ->
-            res
-
-          {:ok, added_binary, new_rest, new_outer_acc} ->
-            unquote(fn_name)(new_rest, acc <> added_binary, missing_fun, new_outer_acc)
-        end
-      end
-    end
-  end
-
-  defp name_matches?(name, %Regex{} = filter), do: Regex.match?(filter, name)
-  defp name_matches?(name, filter), do: name == to_string(filter)
-
-  def filter_to_selected_encodings(names, filters, aliases) do
-    matching =
-      for n = {k, _} <- names,
-          f <- Enum.map(filters, &Map.get(aliases, &1, &1)),
-          name_matches?(k, f),
-          do: n
-
-    matching
-    |> Enum.sort()
-    |> Enum.uniq()
-  end
-end
-
 defmodule Codepagex.Mappings do
   @moduledoc false
 
@@ -187,40 +73,13 @@ defmodule Codepagex.Mappings do
                end
              )
 
-  # define the to_string_xxx for each mapping
-  for {n, m} <- @encodings, do: Helpers.def_to_string(n, m)
+  def get_encodings, do: @encodings
 
-  # define methods to forward to_string(...) to a specific implementation
-  for {name, _} <- @encodings do
-    fun_name = Helpers.function_name_for_mapping_name("to_string", name)
-
-    def to_string(binary, unquote(name |> String.to_atom()), missing_fun, acc) do
-      unquote(fun_name)(binary, <<>>, missing_fun, acc)
-    end
+  def to_string(binary, encoding, missing_fun, acc) do
+    Codepagex.Functions.ToString.to_string(binary, encoding, missing_fun, acc)
   end
 
-  def to_string(_, encoding, _, acc) do
-    {:error, "Unknown encoding #{inspect(encoding)}", acc}
-  end
-
-  # define the from_string_xxx for each encoding
-  for {n, m} <- @encodings, do: Helpers.def_from_string(n, m)
-
-  # define methods to forward from_string(...) to a specific implementation
-  for {name, _} <- @encodings do
-    fun_name = Helpers.function_name_for_mapping_name("from_string", name)
-
-    def from_string(
-          string,
-          unquote(name |> String.to_atom()),
-          missing_fun,
-          acc
-        ) do
-      unquote(fun_name)(string, <<>>, missing_fun, acc)
-    end
-  end
-
-  def from_string(_, encoding, _, acc) do
-    {:error, "Unknown encoding #{inspect(encoding)}", acc}
+  def from_string(string, encoding, missing_fun, acc) do
+    Codepagex.Functions.FromString.from_string(string, encoding, missing_fun, acc)
   end
 end
