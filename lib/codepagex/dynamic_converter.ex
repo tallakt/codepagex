@@ -1,10 +1,13 @@
 defmodule Codepagex.DynamicConverter do
-  @moduledoc false
+  @moduledoc """
+  This module generate a dynamic module for each encoding that is configured by the user.
+  It then creates a clause that calls this new module through apply/3.
+  It also has catch-all clauses for encodings that are not configured.
+  """
   require Codepagex.Mappings.Helpers
 
   encodings = Codepagex.Mappings.get_encoding_names()
 
-  # define methods to forward to_string(...) to a specific implementation
   for name <- encodings do
     parsed_name = String.replace(name, ["/", " "], "_")
     module_name = Module.concat(Codepagex.Functions.ToString.Generated, parsed_name)
