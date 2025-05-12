@@ -9,7 +9,7 @@ defmodule Codepagex.DynamicConverter do
 
   for name <- encodings do
     parsed_name = String.replace(name, ["/", " "], "_")
-    module_name = Module.concat(Codepagex.Functions.ToString.Generated, parsed_name)
+    module_name = Module.concat(Codepagex.Functions.Generated, parsed_name)
 
     module_content = """
     defmodule #{inspect(module_name)} do
