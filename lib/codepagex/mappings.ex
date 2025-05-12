@@ -72,14 +72,16 @@ defmodule Codepagex.Mappings do
                  _else -> []
                end
              )
+             |> Map.new()
 
-  def get_encodings, do: @encodings
+  def get_encoding_names(), do: Map.keys(@encodings)
+  def get_encodings(name), do: @encodings[name]
 
   def to_string(binary, encoding, missing_fun, acc) do
-    Codepagex.Functions.ToString.to_string(binary, encoding, missing_fun, acc)
+    Codepagex.DynamicConverter.to_string(binary, encoding, missing_fun, acc)
   end
 
   def from_string(string, encoding, missing_fun, acc) do
-    Codepagex.Functions.FromString.from_string(string, encoding, missing_fun, acc)
+    Codepagex.DynamicConverter.from_string(string, encoding, missing_fun, acc)
   end
 end

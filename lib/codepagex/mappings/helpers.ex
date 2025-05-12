@@ -19,48 +19,6 @@ defmodule Codepagex.Mappings.Helpers do
   defmacro def_to_string(name, encoding) do
     quote(bind_quoted: [n: name, e: encoding], generated: true, unquote: false) do
       alias Codepagex.Mappings.Helpers
-      fn_name = Helpers.function_name_for_mapping_name("to_string", n)
-
-      for {from, to} <- e do
-        defp unquote(fn_name)(
-               unquote(from) <> rest,
-               acc,
-               missing_fun,
-               outer_acc
-             ) do
-          unquote(fn_name)(
-            rest,
-            acc <> <<unquote(to)::utf8>>,
-            missing_fun,
-            outer_acc
-          )
-        end
-      end
-
-      defp unquote(fn_name)("", result, _, outer_acc) do
-        {:ok, result, outer_acc}
-      end
-
-      defp unquote(fn_name)(rest, acc, missing_fun, outer_acc) do
-        case missing_fun.(rest, outer_acc) do
-          res = {:error, _, _} ->
-            res
-
-          {:ok, codepoints, new_rest, new_outer_acc} ->
-            unquote(fn_name)(
-              new_rest,
-              acc <> codepoints,
-              missing_fun,
-              new_outer_acc
-            )
-        end
-      end
-    end
-  end
-
-  defmacro def_to_string_raw(name, encoding) do
-    quote(bind_quoted: [n: name, e: encoding], generated: true, unquote: false) do
-      alias Codepagex.Mappings.Helpers
 
       for {from, to} <- e do
         def to_string(
@@ -90,38 +48,6 @@ defmodule Codepagex.Mappings.Helpers do
   end
 
   defmacro def_from_string(name, encoding) do
-    quote(bind_quoted: [n: name, e: encoding], generated: true, unquote: false) do
-      alias Codepagex.Mappings.Helpers
-      fn_name = Helpers.function_name_for_mapping_name("from_string", n)
-
-      for {from, to} <- e do
-        defp unquote(fn_name)(
-               <<unquote(to)::utf8>> <> rest,
-               acc,
-               fun,
-               outer_acc
-             ) do
-          unquote(fn_name)(rest, acc <> unquote(from), fun, outer_acc)
-        end
-      end
-
-      defp unquote(fn_name)("", result, _, outer_acc) do
-        {:ok, result, outer_acc}
-      end
-
-      defp unquote(fn_name)(rest, acc, missing_fun, outer_acc) do
-        case missing_fun.(rest, outer_acc) do
-          res = {:error, _, _} ->
-            res
-
-          {:ok, added_binary, new_rest, new_outer_acc} ->
-            unquote(fn_name)(new_rest, acc <> added_binary, missing_fun, new_outer_acc)
-        end
-      end
-    end
-  end
-
-  defmacro def_from_string_raw(name, encoding) do
     quote(bind_quoted: [n: name, e: encoding], generated: true, unquote: false) do
       alias Codepagex.Mappings.Helpers
 

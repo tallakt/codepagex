@@ -1,11 +1,11 @@
-defmodule Codepagex.Functions.ToString do
+defmodule Codepagex.DynamicConverter do
   @moduledoc false
   require Codepagex.Mappings.Helpers
 
-  encodings = Codepagex.Mappings.get_encodings()
+  encodings = Codepagex.Mappings.get_encoding_names()
 
   # define methods to forward to_string(...) to a specific implementation
-  for {name, _} <- encodings do
+  for name <- encodings do
     parsed_name = String.replace(name, ["/", " "], "_")
     module_name = Module.concat(Codepagex.Functions.ToString.Generated, parsed_name)
 
@@ -14,10 +14,10 @@ defmodule Codepagex.Functions.ToString do
       require Codepagex.Mappings.Helpers
       alias Codepagex.Mappings.Helpers
 
-      encodings = Codepagex.Mappings.get_encodings()
-      {name, mappings} = Enum.find(encodings, fn {n, _} -> n == #{inspect(name)} end)
+      encodings = Codepagex.Mappings.get_encodings(#{inspect(name)})
 
-      Helpers.def_to_string_raw(name, mappings)
+      Helpers.def_to_string(#{inspect(name)}, encodings)
+      Helpers.def_from_string(#{inspect(name)}, encodings)
     end
     """
 
@@ -26,12 +26,20 @@ defmodule Codepagex.Functions.ToString do
 
     :code.load_binary(module_name, ~c"#{module_name}.beam", module_binary)
 
-    def to_string(binary, unquote(name |> String.to_atom()), missing_fun, acc) do
+    def to_string(binary, unquote(String.to_atom(name)), missing_fun, acc) do
       apply(unquote(module_name), :to_string, [binary, <<>>, missing_fun, acc])
+    end
+
+    def from_string(binary, unquote(String.to_atom(name)), missing_fun, acc) do
+      apply(unquote(module_name), :from_string, [binary, <<>>, missing_fun, acc])
     end
   end
 
   def to_string(_, encoding, _, acc) do
+    {:error, "Unknown encoding #{inspect(encoding)}", acc}
+  end
+
+  def from_string(_, encoding, _, acc) do
     {:error, "Unknown encoding #{inspect(encoding)}", acc}
   end
 end
