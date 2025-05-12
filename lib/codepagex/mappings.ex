@@ -168,7 +168,7 @@ defmodule Codepagex.Mappings do
     Codepagex.DynamicConverter.to_string(binary, encoding, missing_fun, acc)
   end
 
-  def from_string(string, encoding, missing_fun, acc) do
-    Codepagex.DynamicConverter.from_string(string, encoding, missing_fun, acc)
+  def from_string(binary, encoding, missing_fun, acc) do
+    Codepagex.DynamicConverter.from_string(binary, encoding, missing_fun, acc)
   end
 end

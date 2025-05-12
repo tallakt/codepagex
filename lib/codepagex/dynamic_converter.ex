@@ -4,6 +4,7 @@ defmodule Codepagex.DynamicConverter do
   It then creates a clause that calls this new module through apply/3.
   It also has catch-all clauses for encodings that are not configured.
   """
+
   encodings = Codepagex.Mappings.get_encoding_names()
 
   for name <- encodings do
