@@ -7,15 +7,6 @@ defmodule Codepagex.Mappings.Helpers do
     |> Enum.at(1)
   end
 
-  def function_name_for_mapping_name(prefix, mapping_name) do
-    mapping_part =
-      mapping_name
-      |> String.replace(~r|[-/]|, "_")
-      |> String.downcase()
-
-    :"#{prefix}_#{mapping_part}"
-  end
-
   defmacro def_to_string(name, encoding) do
     quote(bind_quoted: [n: name, e: encoding], generated: true, unquote: false) do
       alias Codepagex.Mappings.Helpers
