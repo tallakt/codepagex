@@ -36,10 +36,11 @@ defmodule Codepagex.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:ex_doc, "~> 0.37", only: :dev},
+      {:ex_doc, "~> 0.38", only: :dev},
       {:benchee, "~> 1.4", only: :dev},
       {:inch_ex, "~> 2.0", only: :dev},
-      {:credo, "~> 1.7", only: :dev}
+      {:credo, "~> 1.7", only: :dev},
+      {:iconv, "~> 1.0", only: :dev}
     ]
   end
 
