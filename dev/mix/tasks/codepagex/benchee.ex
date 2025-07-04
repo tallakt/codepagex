@@ -6,8 +6,8 @@ defmodule Mix.Tasks.Codepagex.Benchee do
   import Codepagex
   require Codepagex
 
-  @iso from_string("æøåæøåæøåæøåæøåÆØÅÆØÅÆØÅÆØÅÆØÅabcdefghijlm", :iso_8859_1)
-  @ascii from_string("abcdefghijklmnopqrstuvwxyzABCDEFGHIJK", :ascii)
+  @iso from_string!("æøåæøåæøåæøåæøåÆØÅÆØÅÆØÅÆØÅÆØÅabcdefghijlm", :iso_8859_1)
+  @ascii from_string!("abcdefghijklmnopqrstuvwxyzABCDEFGHIJK", :ascii)
   @utf8 "abcdefghijklmnoÆØÅæøåABCDEFGæøåæøåæøåæøåæøåæøåæøåæøå"
   @utf8_gigantic Stream.cycle(["A"]) |> Stream.take(1 * 1000 * 1000) |> Enum.into("")
 
