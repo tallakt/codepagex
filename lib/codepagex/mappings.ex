@@ -19,12 +19,12 @@ defmodule Codepagex.Mappings.Helpers do
       for encoding_point <- e do
         case encoding_point do
           {from, to} ->
-            def to_string(
-                  unquote(from) <> rest,
-                  acc,
-                  missing_fun,
-                  outer_acc
-                ) do
+            defp to_string(
+                   unquote(from) <> rest,
+                   acc,
+                   missing_fun,
+                   outer_acc
+                 ) do
               to_string(
                 rest,
                 acc <> <<unquote(to)::utf8>>,
@@ -35,11 +35,11 @@ defmodule Codepagex.Mappings.Helpers do
         end
       end
 
-      def to_string("", result, _, outer_acc) do
+      defp to_string("", result, _, outer_acc) do
         {:ok, result, outer_acc}
       end
 
-      def to_string(rest, acc, missing_fun, outer_acc) do
+      defp to_string(rest, acc, missing_fun, outer_acc) do
         case missing_fun.(rest, outer_acc) do
           res = {:error, _, _} ->
             res
@@ -63,22 +63,22 @@ defmodule Codepagex.Mappings.Helpers do
       for encoding_point <- e do
         case encoding_point do
           {from, to} ->
-            def from_string(
-                  <<unquote(to)::utf8>> <> rest,
-                  acc,
-                  fun,
-                  outer_acc
-                ) do
+            defp from_string(
+                   <<unquote(to)::utf8>> <> rest,
+                   acc,
+                   fun,
+                   outer_acc
+                 ) do
               from_string(rest, acc <> unquote(from), fun, outer_acc)
             end
         end
       end
 
-      def from_string("", result, _, outer_acc) do
+      defp from_string("", result, _, outer_acc) do
         {:ok, result, outer_acc}
       end
 
-      def from_string(rest, acc, missing_fun, outer_acc) do
+      defp from_string(rest, acc, missing_fun, outer_acc) do
         case missing_fun.(rest, outer_acc) do
           res = {:error, _, _} ->
             res
@@ -192,6 +192,14 @@ defmodule Codepagex.Mappings do
           require Codepagex.Mappings.Helpers
           alias Codepagex.Mappings.Helpers
 
+          def to_string(binary, missing_fun, acc) do
+            to_string(binary, <<>>, missing_fun, acc)
+          end
+
+          def from_string(binary, missing_fun, acc) do
+            from_string(binary, <<>>, missing_fun, acc)
+          end
+
           Helpers.def_to_string(name, encodings)
           Helpers.def_from_string(name, encodings)
         end
@@ -207,11 +215,11 @@ defmodule Codepagex.Mappings do
     module_name = Helpers.module_name_for_mapping_name(name)
 
     def to_string(binary, unquote(name |> String.to_atom()), missing_fun, acc) do
-      unquote(module_name).to_string(binary, <<>>, missing_fun, acc)
+      unquote(module_name).to_string(binary, missing_fun, acc)
     end
 
     def from_string(binary, unquote(name |> String.to_atom()), missing_fun, acc) do
-      unquote(module_name).from_string(binary, <<>>, missing_fun, acc)
+      unquote(module_name).from_string(binary, missing_fun, acc)
     end
   end
 
