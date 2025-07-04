@@ -4,7 +4,7 @@ defmodule Codepagex.MixProject do
   def project do
     [
       app: :codepagex,
-      version: "0.1.10",
+      version: "0.1.11",
       elixir: "~> 1.16",
       name: "Codepagex",
       description: description(),
