@@ -167,6 +167,9 @@ defmodule Codepagex.Mappings do
   def encoding_list(:all), do: @all_names_files |> Map.keys() |> Enum.sort()
   def encoding_list(_), do: @filtered_names_files |> Enum.into(%{}) |> Map.keys() |> Enum.sort()
 
+  # Load the module as it is used in a task during compilation
+  Code.ensure_loaded!(Codepagex.MappingFile)
+
   # load mapping files
   @encodings Enum.flat_map(
                Task.async_stream(
