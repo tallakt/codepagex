@@ -126,7 +126,7 @@ The encodings that are known to require very long compile times are:
 - VENDORS/MICSFT/WINDOWS/CP949
 - VENDORS/MICSFT/WINDOWS/CP950
 
-#### Regexes on Erlang/OTP 28 {: .warning}
+#### Regexes on Erlang/OTP 28
 On Erlang/OTP 28, compiled regexes are no longer serializable by default.
 Because the `:encodings` value is read at compile time and recorded in the
 generated `.app` file, a plain regex in this list will produce a broken app
