@@ -126,6 +126,23 @@ The encodings that are known to require very long compile times are:
 - VENDORS/MICSFT/WINDOWS/CP949
 - VENDORS/MICSFT/WINDOWS/CP950
 
+#### Regexes on Erlang/OTP 28 {: .warning}
+On Erlang/OTP 28, compiled regexes are no longer serializable by default.
+Because the `:encodings` value is read at compile time and recorded in the
+generated `.app` file, a plain regex in this list will produce a broken app
+file and the error:
+
+```
+the app file at "_build/prod/lib/codepagex/ebin/codepagex.app" is invalid
+```
+
+To use regexes in `:encodings` on OTP 28 you need Elixir 1.19 or later, and
+the regex must use the `E` ("external") modifier, eg `~r[iso8859]iE`. On
+Elixir 1.18 and earlier running OTP 28, avoid regexes here and list the
+encodings explicitly by name instead. After changing the config, remember to
+run `mix deps.clean codepagex` and delete any stale `_build` before
+recompiling.
+
 ## TODO
 
 - A few encodings are not yet supported for different reasons. In particular
