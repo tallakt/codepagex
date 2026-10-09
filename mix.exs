@@ -4,7 +4,7 @@ defmodule Codepagex.MixProject do
   def project do
     [
       app: :codepagex,
-      version: "0.1.13",
+      version: "0.2.0",
       elixir: "~> 1.16",
       name: "Codepagex",
       description: description(),
@@ -52,12 +52,13 @@ defmodule Codepagex.MixProject do
 
   defp package() do
     [
-      files: ["lib", "mix.exs", "README*", "LICENSE*", "unicode"],
+      files: ["lib", "mix.exs", "README*", "LICENSE*", "CHANGELOG*", "unicode"],
       contributors: ["Tallak Tveide"],
       maintainers: ["Tallak Tveide"],
       licenses: ["Apache-2.0"],
       links: %{
-        "GitHub" => "https://github.com/tallakt/codepagex"
+        "GitHub" => "https://github.com/tallakt/codepagex",
+        "Changelog" => "https://github.com/tallakt/codepagex/blob/main/CHANGELOG.md"
       }
     ]
   end
