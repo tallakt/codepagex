@@ -114,7 +114,7 @@ defmodule Codepagex.Mappings do
 
   # aliases
   @iso_aliases for n <- 1..16, do: {:"iso_8859_#{n}", "ISO8859/8859-#{n}"}
-  @ascii_alias [{:ascii, "VENDORS/MISC/US-ASCII-QUOTES"}]
+  @ascii_alias [{:ascii, "VENDORS/MISC/US-ASCII"}]
   @all_aliases (@iso_aliases ++ @ascii_alias) |> Enum.into(%{})
 
   def aliases(selection \\ nil)

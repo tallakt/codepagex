@@ -53,6 +53,25 @@ defmodule CodepagexTest do
     end
   end
 
+  test ":ascii is plain US-ASCII, mapping every byte 0..127 to itself" do
+    all = for b <- 0..127, into: <<>>, do: <<b>>
+
+    assert Codepagex.aliases().ascii == "VENDORS/MISC/US-ASCII"
+    assert Codepagex.to_string(all, :ascii) == {:ok, all}
+    assert Codepagex.from_string(all, :ascii) == {:ok, all}
+  end
+
+  test ":ascii keeps apostrophe and backtick as is" do
+    assert Codepagex.to_string("don't `x`", :ascii) == {:ok, "don't `x`"}
+    assert Codepagex.from_string("don't `x`", :ascii) == {:ok, "don't `x`"}
+  end
+
+  test ":ascii rejects bytes above 127 and non-ascii characters" do
+    assert {:error, @missing} = Codepagex.to_string(<<128>>, :ascii)
+    assert {:error, @missing} = Codepagex.from_string("æ", :ascii)
+    assert {:error, @missing} = Codepagex.from_string("’", :ascii)
+  end
+
   test "to_string returns error on unknown encoding" do
     assert Codepagex.to_string("test", :unknown) ==
              {:error, "Unknown encoding :unknown"}

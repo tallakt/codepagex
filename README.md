@@ -96,6 +96,7 @@ To specify the encodings to use, add the following lines to your
 ```
 
 This will add only the ASCII encoding, as specified by it's shorthand alias.
+
 Any number of encodings may be specified like this in the list. The list may
 contain strings, atoms or regular expressions that match either an alias or a
 full encoding name, eg:
@@ -125,6 +126,12 @@ The encodings that are known to require very long compile times are:
 - VENDORS/MICSFT/WINDOWS/CP936
 - VENDORS/MICSFT/WINDOWS/CP949
 - VENDORS/MICSFT/WINDOWS/CP950
+
+Up to and including version 0.1.13, `:ascii` was an alias for
+`"VENDORS/MISC/US-ASCII-QUOTES"`, which maps `'` and `` ` `` to the curly
+quotes U+2019 and U+2018. In later versions `:ascii` is plain US-ASCII
+(`"VENDORS/MISC/US-ASCII"`). To keep the old behavior, add
+`"VENDORS/MISC/US-ASCII-QUOTES"` to `:encodings` and use that name.
 
 #### Regexes on Erlang/OTP 28
 On Erlang/OTP 28, compiled regexes are no longer serializable by default.
