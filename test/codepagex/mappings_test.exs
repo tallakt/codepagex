@@ -49,4 +49,40 @@ defmodule Codepagex.MappingsTest do
     assert Helpers.name_for_file("ISO8859/8859-1.TXT") == "ISO8859/8859-1"
     assert Helpers.name_for_file("VENDORS/MISC/CP424.txt") == "VENDORS/MISC/CP424"
   end
+
+  describe "from_string_entries" do
+    @cp932 "VENDORS/MICSFT/WINDOWS/CP932"
+    @cp932_file Path.join([__DIR__] ++ ~w(.. .. unicode VENDORS MICSFT WINDOWS CP932.TXT))
+
+    test "leaves other encodings unchanged" do
+      entries = [{<<2>>, 0x41}, {<<1>>, 0x41}]
+      assert Helpers.from_string_entries("ISO8859/8859-1", entries) == entries
+    end
+
+    test "CP932 uses one byte sequence per codepoint" do
+      entries = Codepagex.MappingFile.load(@cp932_file)
+      used = Helpers.from_string_entries(@cp932, entries)
+
+      codepoints = Enum.map(used, fn {_, cp} -> cp end)
+      assert codepoints == Enum.uniq(codepoints)
+      assert MapSet.new(codepoints) == MapSet.new(entries, fn {_, cp} -> cp end)
+    end
+
+    test "CP932 prefers the standard byte sequences" do
+      used =
+        @cp932
+        |> Helpers.from_string_entries(Codepagex.MappingFile.load(@cp932_file))
+        |> Map.new(fn {bytes, cp} -> {cp, Base.encode16(bytes)} end)
+
+      # JIS X 0208 rather than the NEC row 13 duplicate
+      assert used[0x2252] == "81E0"
+      assert used[0x222A] == "81BE"
+      # JIS X 0208 rather than the IBM extension
+      assert used[0xFFE2] == "81CA"
+      # NEC row 13 rather than the IBM extension
+      assert used[0x2160] == "8754"
+      # IBM extension rather than the NEC selected IBM extension
+      assert used[0x7E8A] == "FA5C"
+    end
+  end
 end

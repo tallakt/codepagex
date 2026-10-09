@@ -5,6 +5,29 @@ defmodule Codepagex.Mappings.Helpers do
     Regex.replace(~r"\.txt$"i, relative_filename, "")
   end
 
+  # Some tables map several byte sequences to the same codepoint. When encoding
+  # a string, only one of them can be used. For CP932 the standard choice (as in
+  # Windows and the WHATWG encoding standard) is the first sequence in the file,
+  # ignoring the NEC selected IBM extension block 0xED00 - 0xEEFF, as those
+  # characters are also available in the IBM extension block at 0xFA00.
+  @skipped_lead_bytes %{"VENDORS/MICSFT/WINDOWS/CP932" => [0xED, 0xEE]}
+
+  # Returns the entries that are used for from_string. The entries are given in
+  # the order produced by Codepagex.MappingFile.load/1, which is the reverse of
+  # the file order.
+  def from_string_entries(name, entries) do
+    case Map.fetch(@skipped_lead_bytes, name) do
+      {:ok, skipped} ->
+        entries
+        |> Enum.reverse()
+        |> Enum.sort_by(fn {<<lead, _::binary>>, _} -> lead in skipped end)
+        |> Enum.uniq_by(fn {_, codepoint} -> codepoint end)
+
+      :error ->
+        entries
+    end
+  end
+
   def module_name_for_mapping_name(name) do
     parsed_name = String.replace(name, ["/", " "], "_")
     Module.concat(Codepagex.Functions.Generated, parsed_name)
@@ -217,7 +240,7 @@ defmodule Codepagex.Mappings do
           end
 
           Helpers.def_to_string(name, encodings)
-          Helpers.def_from_string(name, encodings)
+          Helpers.def_from_string(name, Helpers.from_string_entries(name, encodings))
         end
       end
 
