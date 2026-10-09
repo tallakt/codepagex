@@ -32,34 +32,34 @@ defmodule Mix.Tasks.Codepagex.Benchee do
   end
 
   defp ascii_to_string do
-    for _ <- 1..1000, do: to_string!(@ascii, :ascii)
+    Enum.each(1..1000, fn _ -> to_string!(@ascii, :ascii) end)
   end
 
   defp gigantic_iso_to_string do
-    for _ <- 1..1000, do: to_string!(@iso_gigantic, :iso_8859_1)
+    Enum.each(1..1000, fn _ -> to_string!(@iso_gigantic, :iso_8859_1) end)
   end
 
   defp iso_to_string do
-    for _ <- 1..1000, do: to_string!(@iso, :iso_8859_1)
+    Enum.each(1..1000, fn _ -> to_string!(@iso, :iso_8859_1) end)
   end
 
   defp ascii_from_string do
-    for _ <- 1..1000, do: from_string!(@utf8, :ascii, replace_nonexistent("_"))
+    Enum.each(1..1000, fn _ -> from_string!(@utf8, :ascii, replace_nonexistent("_")) end)
   end
 
   defp ascii_from_gigantic_string do
-    for _ <- 1..1000, do: from_string!(@utf8_gigantic, :ascii, replace_nonexistent("_"))
+    Enum.each(1..1000, fn _ -> from_string!(@utf8_gigantic, :ascii, replace_nonexistent("_")) end)
   end
 
   defp iso_from_string do
-    for _ <- 1..1000, do: from_string!(@utf8, :iso_8859_1)
+    Enum.each(1..1000, fn _ -> from_string!(@utf8, :iso_8859_1) end)
   end
 
   defp iso_from_gigantic_string do
-    for _ <- 1..1000, do: from_string!(@utf8_gigantic, :iso_8859_1)
+    Enum.each(1..1000, fn _ -> from_string!(@utf8_gigantic, :iso_8859_1) end)
   end
 
   defp erlang_unicode_from_gigantic_string do
-    for _ <- 1..1000, do: :unicode.characters_to_binary(@utf8_gigantic, :utf8, :latin1)
+    Enum.each(1..1000, fn _ -> :unicode.characters_to_binary(@utf8_gigantic, :utf8, :latin1) end)
   end
 end

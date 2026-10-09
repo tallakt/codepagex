@@ -35,7 +35,7 @@ IO.puts("ASCII to UTF-8")
 
 Benchee.run(
   %{
-    "Codepagex.from_string" => &Codepagex.to_string(&1, :ascii),
+    "Codepagex.to_string" => &Codepagex.to_string(&1, :ascii),
     ":iconv.convert" => &:iconv.convert("ascii", "utf-8", &1)
   },
   inputs: %{
@@ -73,12 +73,13 @@ iso_1M =
   Stream.cycle([iso])
   |> Stream.take(m1)
   |> Enum.into(<<>>)
+  |> binary_slice(0, m1)
 
 IO.puts("ISO8859-1 to UTF-8")
 
 Benchee.run(
   %{
-    "Codepagex.from_string" => &Codepagex.to_string(&1, :iso_8859_1),
+    "Codepagex.to_string" => &Codepagex.to_string(&1, :iso_8859_1),
     ":iconv.convert" => &:iconv.convert("iso8859-1", "utf-8", &1),
     ":unicode.characters_to_binary" => &:unicode.characters_to_binary(&1, :latin1, :utf8)
   },
@@ -100,7 +101,7 @@ utf8_10K = utf8_stream |> Stream.take(k10) |> Enum.into("")
 utf8_100K = utf8_stream |> Stream.take(k100) |> Enum.into("")
 utf8_1M = utf8_stream |> Stream.take(m1) |> Enum.into("")
 
-IO.puts("UTF-8 to ISO8895-1")
+IO.puts("UTF-8 to ISO8859-1")
 
 Benchee.run(
   %{
