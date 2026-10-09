@@ -1,10 +1,8 @@
 defmodule Codepagex.Mappings.Helpers do
   @moduledoc false
 
-  def name_for_file(filename) do
-    ~r"unicode/(.*)\.txt$"i
-    |> Regex.run(filename)
-    |> Enum.at(1)
+  def name_for_file(relative_filename) do
+    Regex.replace(~r"\.txt$"i, relative_filename, "")
   end
 
   def module_name_for_mapping_name(name) do
@@ -147,6 +145,7 @@ defmodule Codepagex.Mappings do
   @all_mapping_files @mapping_folder
                      |> Path.join(Path.join(~w(** *.TXT)))
                      |> Path.wildcard()
+                     |> Enum.map(&Path.relative_to(&1, @mapping_folder))
                      |> Enum.reject(&String.match?(&1, ~r[README]i))
                      # lots of weird stuff
                      |> Enum.reject(&String.match?(&1, ~r[VENDORS/APPLE]i))
@@ -161,7 +160,9 @@ defmodule Codepagex.Mappings do
                      # generates warnings
                      |> Enum.reject(&String.match?(&1, ~r[EBCDIC/CP875]i))
 
-  @all_names_files for n <- @all_mapping_files, do: {Helpers.name_for_file(n), n}, into: %{}
+  @all_names_files for n <- @all_mapping_files,
+                       do: {Helpers.name_for_file(n), Path.join(@mapping_folder, n)},
+                       into: %{}
 
   @filtered_names_files Helpers.filter_to_selected_encodings(
                           @all_names_files,

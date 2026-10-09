@@ -44,4 +44,9 @@ defmodule Codepagex.MappingsTest do
     assert warnings =~ ~s("y")
     refute warnings =~ "iso_8859_1 in"
   end
+
+  test "name_for_file strips the extension from a relative path" do
+    assert Helpers.name_for_file("ISO8859/8859-1.TXT") == "ISO8859/8859-1"
+    assert Helpers.name_for_file("VENDORS/MISC/CP424.txt") == "VENDORS/MISC/CP424"
+  end
 end
