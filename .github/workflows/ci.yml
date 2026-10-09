@@ -72,3 +72,38 @@ jobs:
       - run: mix format --check-formatted
       # Refactoring suggestions are not enforced yet; see .credo.exs
       - run: mix credo --ignore-checks Refactor
+
+  dialyzer:
+    name: Dialyzer
+    runs-on: ubuntu-24.04
+    env:
+      MIX_ENV: dev
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: erlef/setup-beam@v1
+        id: beam
+        with:
+          elixir-version: "1.19"
+          otp-version: "28"
+
+      - name: Restore PLT cache
+        id: plt-cache
+        uses: actions/cache/restore@v6
+        with:
+          path: priv/plts
+          key: plt-${{ runner.os }}-${{ steps.beam.outputs.otp-version }}-${{ steps.beam.outputs.elixir-version }}-${{ hashFiles('mix.lock') }}
+
+      - run: mix deps.get
+
+      # Built separately so the cache is saved even if the analysis fails
+      - run: mix dialyzer --plt
+
+      - name: Save PLT cache
+        if: steps.plt-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v6
+        with:
+          path: priv/plts
+          key: ${{ steps.plt-cache.outputs.cache-primary-key }}
+
+      - run: mix dialyzer --format github

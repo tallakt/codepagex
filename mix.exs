@@ -13,6 +13,11 @@ defmodule Codepagex.MixProject do
       deps: deps(),
       aliases: [],
       docs: [main: Codepagex],
+      dialyzer: [
+        plt_add_apps: [:mix],
+        plt_local_path: "priv/plts",
+        plt_core_path: "priv/plts"
+      ],
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       elixirc_paths: elixirc_paths(Mix.env())
@@ -40,6 +45,7 @@ defmodule Codepagex.MixProject do
       {:benchee, "~> 1.4", only: :dev},
       {:inch_ex, "~> 2.0", only: :dev},
       {:credo, "~> 1.7", only: :dev},
+      {:dialyxir, "~> 1.4", only: :dev, runtime: false},
       {:iconv, "~> 1.0", only: :dev}
     ]
   end

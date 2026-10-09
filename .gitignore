@@ -6,3 +6,4 @@ erl_crash.dump
 **/*.beam
 docs/
 doc/
+/priv/plts/
