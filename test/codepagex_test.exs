@@ -89,6 +89,24 @@ defmodule CodepagexTest do
              {:ok, "___", 3}
   end
 
+  test "bang functions raise Codepagex.Error when the outer missing_fun fails" do
+    failing = fn _encoding -> {:error, "outer failed"} end
+
+    assert_raise Codepagex.Error, "outer failed", fn ->
+      Codepagex.to_string!(<<200>>, :ascii, failing)
+    end
+
+    assert_raise Codepagex.Error, "outer failed", fn ->
+      Codepagex.from_string!("æ", :ascii, failing)
+    end
+  end
+
+  test "from_string! raises Codepagex.Error when the replacement is not encodable" do
+    assert_raise Codepagex.Error, @missing, fn ->
+      Codepagex.from_string!("æ", :ascii, Codepagex.replace_nonexistent("ø"))
+    end
+  end
+
   test "to_string returns error on unknown encoding" do
     assert Codepagex.to_string("test", :unknown) ==
              {:error, "Unknown encoding :unknown"}

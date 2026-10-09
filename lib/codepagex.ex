@@ -346,6 +346,10 @@ defmodule Codepagex do
 
       {:error, reason, _} ->
         raise Codepagex.Error, reason
+
+      # the outer missing_fun may fail before an accumulator is available
+      {:error, reason} ->
+        raise Codepagex.Error, reason
     end
   end
 
@@ -523,6 +527,10 @@ defmodule Codepagex do
         result
 
       {:error, reason, _} ->
+        raise Codepagex.Error, reason
+
+      # the outer missing_fun may fail before an accumulator is available
+      {:error, reason} ->
         raise Codepagex.Error, reason
     end
   end
