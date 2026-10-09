@@ -94,9 +94,20 @@ defmodule Codepagex.Mappings.Helpers do
   defp name_matches?(name, filter), do: name == to_string(filter)
 
   def filter_to_selected_encodings(names, filters, aliases) do
+    resolved = Enum.map(filters, &{&1, Map.get(aliases, &1, &1)})
+
+    for {original, f} <- resolved,
+        not Enum.any?(names, fn {k, _} -> name_matches?(k, f) end) do
+      IO.warn(
+        "Codepagex: #{inspect(original)} in config :codepagex, :encodings " <>
+          "does not match any encoding",
+        []
+      )
+    end
+
     matching =
       for n = {k, _} <- names,
-          f <- Enum.map(filters, &Map.get(aliases, &1, &1)),
+          {_, f} <- resolved,
           name_matches?(k, f),
           do: n
 

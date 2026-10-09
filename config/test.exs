@@ -20,6 +20,6 @@ config :codepagex, :encodings, [
   "ISO8859/8859-15",
   "ISO8859/8859-16",
   "ETSI/GSM0338",
-  "MISC/CP424",
-  :"MISC/CP856"
+  "VENDORS/MISC/CP424",
+  :"VENDORS/MISC/CP856"
 ]

@@ -104,10 +104,10 @@ full encoding name, eg:
 ```elixir
     use Mix.Config
     config :codepagex, :encodings, [
-      :ascii,           # by alias name
-      ~r[iso8859]i,     # by a regex matching the full name
-      "ETSI/GSM0338",   # by the full name as a string
-      :"MISC/CP856"     # by a full name as an atom
+      :ascii,               # by alias name
+      ~r[iso8859]i,         # by a regex matching the full name
+      "ETSI/GSM0338",       # by the full name as a string
+      :"VENDORS/MISC/CP856" # by a full name as an atom
     ]
 ```
 
