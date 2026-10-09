@@ -297,18 +297,28 @@ defmodule Codepagex do
       {:ok, inner_fun} ->
         Mappings.to_string(binary, encoding, inner_fun, acc)
 
-      err ->
-        err
+      {:error, reason} ->
+        {:error, reason, acc}
+
+      other ->
+        other
     end
   end
 
   def to_string(binary, encoding, missing_fun, acc) when is_binary(encoding) do
-    try do
-      to_string(binary, String.to_existing_atom(encoding), missing_fun, acc)
-    rescue
-      ArgumentError ->
-        {:error, "Unknown encoding #{inspect(encoding)}", acc}
+    case existing_atom(encoding) do
+      {:ok, atom} -> to_string(binary, atom, missing_fun, acc)
+      :error -> {:error, "Unknown encoding #{inspect(encoding)}", acc}
     end
+  end
+
+  # Only the conversion is guarded, so an ArgumentError raised later, for
+  # example by a user supplied missing_fun, is not reported as an unknown
+  # encoding.
+  defp existing_atom(string) do
+    {:ok, String.to_existing_atom(string)}
+  rescue
+    ArgumentError -> :error
   end
 
   @doc """
@@ -345,10 +355,6 @@ defmodule Codepagex do
         result
 
       {:error, reason, _} ->
-        raise Codepagex.Error, reason
-
-      # the outer missing_fun may fail before an accumulator is available
-      {:error, reason} ->
         raise Codepagex.Error, reason
     end
   end
@@ -472,8 +478,11 @@ defmodule Codepagex do
       {:ok, inner_fun} ->
         Mappings.from_string(string, encoding, inner_fun, acc)
 
-      err ->
-        err
+      {:error, reason} ->
+        {:error, reason, acc}
+
+      other ->
+        other
     end
   end
 
@@ -484,11 +493,9 @@ defmodule Codepagex do
         acc
       )
       when is_binary(encoding) do
-    try do
-      from_string(string, String.to_existing_atom(encoding), missing_fun, acc)
-    rescue
-      ArgumentError ->
-        {:error, "Unknown encoding #{inspect(encoding)}", acc}
+    case existing_atom(encoding) do
+      {:ok, atom} -> from_string(string, atom, missing_fun, acc)
+      :error -> {:error, "Unknown encoding #{inspect(encoding)}", acc}
     end
   end
 
@@ -527,10 +534,6 @@ defmodule Codepagex do
         result
 
       {:error, reason, _} ->
-        raise Codepagex.Error, reason
-
-      # the outer missing_fun may fail before an accumulator is available
-      {:error, reason} ->
         raise Codepagex.Error, reason
     end
   end

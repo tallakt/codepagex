@@ -89,6 +89,27 @@ defmodule CodepagexTest do
              {:ok, "___", 3}
   end
 
+  test "a failing outer missing_fun returns an error tuple with the accumulator" do
+    failing = fn _encoding -> {:error, "outer failed"} end
+
+    assert Codepagex.to_string(<<200>>, :ascii, failing) ==
+             {:error, "outer failed", nil}
+
+    assert Codepagex.to_string(<<200>>, :ascii, failing, 5) ==
+             {:error, "outer failed", 5}
+
+    assert Codepagex.from_string("æ", :ascii, failing, 7) ==
+             {:error, "outer failed", 7}
+
+    assert Codepagex.from_string("æ", "US-ASCII-nope", failing, 9) ==
+             {:error, "Unknown encoding \"US-ASCII-nope\"", 9}
+  end
+
+  test "other return values from the outer missing_fun are passed through" do
+    assert Codepagex.to_string(<<200>>, :ascii, fn _ -> :error end) == :error
+    assert Codepagex.from_string("æ", :ascii, fn _ -> :error end) == :error
+  end
+
   test "bang functions raise Codepagex.Error when the outer missing_fun fails" do
     failing = fn _encoding -> {:error, "outer failed"} end
 
@@ -104,6 +125,20 @@ defmodule CodepagexTest do
   test "from_string! raises Codepagex.Error when the replacement is not encodable" do
     assert_raise Codepagex.Error, @missing, fn ->
       Codepagex.from_string!("æ", :ascii, Codepagex.replace_nonexistent("ø"))
+    end
+  end
+
+  test "an ArgumentError in a missing_fun is not reported as unknown encoding" do
+    raising = fn _encoding -> raise ArgumentError, "from callback" end
+
+    for name <- [:iso_8859_1, "ISO8859/8859-1"] do
+      assert_raise ArgumentError, "from callback", fn ->
+        Codepagex.to_string(<<200>>, name, raising)
+      end
+
+      assert_raise ArgumentError, "from callback", fn ->
+        Codepagex.from_string("æ", name, raising)
+      end
     end
   end
 
