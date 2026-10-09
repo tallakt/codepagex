@@ -10,12 +10,12 @@ defmodule Codepagex do
   alias Codepagex.Mappings
 
   @type to_s_missing_inner ::
-          (binary, term -> {:ok, String.t(), binary, term} | {:error, term})
+          (binary, term -> {:ok, String.t(), binary, term} | {:error, term, term})
   @type to_s_missing_outer ::
           (String.t() -> {:ok, to_s_missing_inner} | {:error, term})
 
   @type from_s_missing_inner ::
-          (String.t(), term -> {:ok, binary, String.t(), term} | {:error, term})
+          (String.t(), term -> {:ok, binary, String.t(), term} | {:error, term, term})
   @type from_s_missing_outer ::
           (String.t() -> {:ok, from_s_missing_inner} | {:error, term})
 
@@ -184,7 +184,7 @@ defmodule Codepagex do
     end
   end
 
-  @spec strip_acc({atom, term, integer}) :: {atom, term}
+  @spec strip_acc({atom, term, term}) :: {atom, term}
   defp strip_acc({code, return_value, _acc}), do: {code, return_value}
 
   @doc """
@@ -282,7 +282,7 @@ defmodule Codepagex do
 
   """
   @spec to_string(binary, encoding, to_s_missing_outer, term) ::
-          {:ok, String.t(), integer} | {:error, term, integer}
+          {:ok, String.t(), term} | {:error, term, term}
   def to_string(binary, encoding, missing_fun, acc \\ nil)
 
   # create a forwarding to_string implementation for each alias
@@ -457,8 +457,8 @@ defmodule Codepagex do
       {:ok, "Hello ###!", 13}
 
   """
-  @spec from_string(binary, encoding, from_s_missing_outer, term) ::
-          {:ok, String.t(), integer} | {:error, term, integer}
+  @spec from_string(String.t(), encoding, from_s_missing_outer, term) ::
+          {:ok, binary, term} | {:error, term, term}
   def from_string(string, encoding, missing_fun, acc \\ nil)
 
   # aliases are forwarded to proper name
