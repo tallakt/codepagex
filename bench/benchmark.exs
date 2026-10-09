@@ -74,7 +74,7 @@ iso_1M =
   |> Stream.take(m1)
   |> Enum.into(<<>>)
 
-IO.puts "ISO8859-1 to UTF-8"
+IO.puts("ISO8859-1 to UTF-8")
 
 Benchee.run(
   %{
@@ -100,7 +100,7 @@ utf8_10K = utf8_stream |> Stream.take(k10) |> Enum.into("")
 utf8_100K = utf8_stream |> Stream.take(k100) |> Enum.into("")
 utf8_1M = utf8_stream |> Stream.take(m1) |> Enum.into("")
 
-IO.puts "UTF-8 to ISO8895-1"
+IO.puts("UTF-8 to ISO8895-1")
 
 Benchee.run(
   %{
@@ -119,7 +119,7 @@ Benchee.run(
   memory_time: 5
 )
 
-IO.puts "UTF-8 to ASCII"
+IO.puts("UTF-8 to ASCII")
 
 Benchee.run(
   %{

@@ -1,0 +1,74 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Elixir ${{ matrix.elixir }} / OTP ${{ matrix.otp }}
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        # Elixir 1.16 is the minimum required by mix.exs. Each Elixir release
+        # is paired with the oldest and newest OTP it supports.
+        include:
+          - { elixir: "1.16", otp: "24" }
+          - { elixir: "1.16", otp: "26" }
+          - { elixir: "1.17", otp: "25" }
+          - { elixir: "1.17", otp: "27" }
+          - { elixir: "1.18", otp: "25" }
+          - { elixir: "1.18", otp: "27" }
+          - { elixir: "1.19", otp: "26" }
+          - { elixir: "1.19", otp: "28" }
+          - { elixir: "1.20", otp: "27" }
+          - { elixir: "1.20", otp: "29" }
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: erlef/setup-beam@v1
+        with:
+          elixir-version: ${{ matrix.elixir }}
+          otp-version: ${{ matrix.otp }}
+
+      - name: Cache build
+        uses: actions/cache@v4
+        with:
+          path: _build
+          key: build-${{ runner.os }}-${{ matrix.otp }}-${{ matrix.elixir }}-${{ hashFiles('mix.exs', 'config/**', 'lib/**', 'unicode/**') }}
+          restore-keys: build-${{ runner.os }}-${{ matrix.otp }}-${{ matrix.elixir }}-
+
+      - run: mix test
+
+  lint:
+    name: Format and Credo
+    runs-on: ubuntu-24.04
+    env:
+      MIX_ENV: dev
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: erlef/setup-beam@v1
+        with:
+          elixir-version: "1.19"
+          otp-version: "28"
+
+      - name: Cache deps and build
+        uses: actions/cache@v4
+        with:
+          path: |
+            deps
+            _build
+          key: lint-${{ runner.os }}-${{ hashFiles('mix.lock') }}
+          restore-keys: lint-${{ runner.os }}-
+
+      - run: mix deps.get
+      - run: mix format --check-formatted
+      # Refactoring suggestions are not enforced yet; see .credo.exs
+      - run: mix credo --ignore-checks Refactor

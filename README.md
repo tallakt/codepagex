@@ -1,6 +1,6 @@
 # Codepagex
 
-[![Build Status](https://travis-ci.org/tallakt/codepagex.svg)](https://travis-ci.org/tallakt/codepagex)
+[![CI](https://github.com/tallakt/codepagex/actions/workflows/ci.yml/badge.svg)](https://github.com/tallakt/codepagex/actions/workflows/ci.yml)
 [![Documentation Status](https://inch-ci.org/github/tallakt/codepagex.svg?branch=master)](https://inch-ci.org/github/tallakt/codepagex#)
 
 Codepagex is an  elixir library to convert between string encodings to and from
