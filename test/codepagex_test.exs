@@ -72,6 +72,23 @@ defmodule CodepagexTest do
     assert {:error, @missing} = Codepagex.from_string("’", :ascii)
   end
 
+  test "replace_nonexistent replaces bytes that are not valid utf-8" do
+    assert Codepagex.from_string(
+             "a" <> <<255>> <> "b",
+             :ascii,
+             Codepagex.replace_nonexistent("_")
+           ) ==
+             {:ok, "a_b", 1}
+
+    assert Codepagex.from_string(
+             <<255, 254>> <> "æ",
+             :ascii,
+             Codepagex.replace_nonexistent("_"),
+             0
+           ) ==
+             {:ok, "___", 3}
+  end
+
   test "to_string returns error on unknown encoding" do
     assert Codepagex.to_string("test", :unknown) ==
              {:error, "Unknown encoding :unknown"}

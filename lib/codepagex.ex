@@ -148,7 +148,8 @@ defmodule Codepagex do
 
 
   The accumulator input `acc` of `from_string/4` is incremented on each
-  replacement done.
+  replacement done. Bytes that are not valid utf-8 are also replaced, one
+  replacement per byte.
 
   ## Examples
 
@@ -164,9 +165,15 @@ defmodule Codepagex do
     fn encoding ->
       case from_string(replace_with, encoding) do
         {:ok, encoded_replace_with} ->
-          inner = fn <<_::utf8, rest::binary>>, acc ->
-            new_acc = if is_integer(acc), do: acc + 1, else: 1
-            {:ok, encoded_replace_with, rest, new_acc}
+          inner = fn
+            <<_::utf8, rest::binary>>, acc ->
+              new_acc = if is_integer(acc), do: acc + 1, else: 1
+              {:ok, encoded_replace_with, rest, new_acc}
+
+            # not valid utf-8, replace a single byte
+            <<_, rest::binary>>, acc ->
+              new_acc = if is_integer(acc), do: acc + 1, else: 1
+              {:ok, encoded_replace_with, rest, new_acc}
           end
 
           {:ok, inner}
