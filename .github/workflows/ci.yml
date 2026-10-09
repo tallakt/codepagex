@@ -30,7 +30,7 @@ jobs:
           - { elixir: "1.20", otp: "27" }
           - { elixir: "1.20", otp: "29" }
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: erlef/setup-beam@v1
         with:
@@ -38,7 +38,7 @@ jobs:
           otp-version: ${{ matrix.otp }}
 
       - name: Cache build
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: _build
           key: build-${{ runner.os }}-${{ matrix.otp }}-${{ matrix.elixir }}-${{ hashFiles('mix.exs', 'config/**', 'lib/**', 'unicode/**') }}
@@ -52,7 +52,7 @@ jobs:
     env:
       MIX_ENV: dev
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: erlef/setup-beam@v1
         with:
@@ -60,7 +60,7 @@ jobs:
           otp-version: "28"
 
       - name: Cache deps and build
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             deps
