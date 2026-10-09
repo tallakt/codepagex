@@ -142,6 +142,19 @@ defmodule CodepagexTest do
     end
   end
 
+  test "Codepagex.Error has a string message for non string reasons" do
+    outer = fn _ -> {:ok, fn _, acc -> {:error, :bad, acc} end} end
+
+    error =
+      assert_raise Codepagex.Error, fn ->
+        Codepagex.to_string!(<<200>>, :ascii, outer)
+      end
+
+    assert Exception.message(error) == ":bad"
+    assert Exception.message(Codepagex.Error.exception({:a, 1})) == "{:a, 1}"
+    assert Exception.message(Codepagex.Error.exception("plain")) == "plain"
+  end
+
   test "to_string returns error on unknown encoding" do
     assert Codepagex.to_string("test", :unknown) ==
              {:error, "Unknown encoding :unknown"}
