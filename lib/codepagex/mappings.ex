@@ -122,7 +122,8 @@ defmodule Codepagex.Mappings do
   alias Codepagex.Mappings.Helpers
 
   # aliases
-  @iso_aliases for n <- 1..16, do: {:"iso_8859_#{n}", "ISO8859/8859-#{n}"}
+  # ISO 8859-12 was abandoned and has no mapping file
+  @iso_aliases for n <- 1..16, n != 12, do: {:"iso_8859_#{n}", "ISO8859/8859-#{n}"}
   @ascii_alias [{:ascii, "VENDORS/MISC/US-ASCII"}]
   @all_aliases (@iso_aliases ++ @ascii_alias) |> Enum.into(%{})
 

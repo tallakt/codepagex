@@ -19,6 +19,16 @@ defmodule CodepagexTest do
     assert Codepagex.aliases().iso_8859_5 == "ISO8859/8859-5"
   end
 
+  test "every alias refers to an existing encoding" do
+    all = Codepagex.encoding_list(:all)
+
+    for {aliaz, name} <- Codepagex.aliases() do
+      assert name in all, "alias #{inspect(aliaz)} refers to missing #{name}"
+    end
+
+    refute Map.has_key?(Codepagex.aliases(), :iso_8859_12)
+  end
+
   test "to_string should work for ISO8859/8859-1" do
     assert Codepagex.to_string(@iso_hello, "ISO8859/8859-1") == {:ok, "hello æøå"}
   end
