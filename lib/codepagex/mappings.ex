@@ -148,7 +148,9 @@ defmodule Codepagex.Mappings do
   # ISO 8859-12 was abandoned and has no mapping file
   @iso_aliases for n <- 1..16, n != 12, do: {:"iso_8859_#{n}", "ISO8859/8859-#{n}"}
   @ascii_alias [{:ascii, "VENDORS/MISC/US-ASCII"}]
-  @all_aliases (@iso_aliases ++ @ascii_alias) |> Enum.into(%{})
+  @windows_aliases for n <- [874, 932, 936, 949, 950 | Enum.to_list(1250..1258)],
+                       do: {:"windows_#{n}", "VENDORS/MICSFT/WINDOWS/CP#{n}"}
+  @all_aliases (@iso_aliases ++ @ascii_alias ++ @windows_aliases) |> Enum.into(%{})
 
   def aliases(selection \\ nil)
 
@@ -197,6 +199,10 @@ defmodule Codepagex.Mappings do
                           ),
                           @all_aliases
                         )
+
+  # Every encoding there is a mapping file for, by name, with the file's path; for
+  # Codepagex.Backend.
+  def mapping_files, do: @all_names_files
 
   # These are documented in Codepagex.encoding_list/1
   def encoding_list(selection \\ nil)

@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.3.0
+
+### New
+
+- `Codepagex.Backend`: `use Codepagex.Backend, encodings: [...]` in a module of
+  your own compiles those encodings into it, with the functions of `Codepagex`
+  for them. A library can so have the encodings it needs without the
+  application configuring Codepagex, and without recompiling it.
+- Aliases for the Windows code pages: `:windows_874`, `:windows_932`,
+  `:windows_936`, `:windows_949`, `:windows_950` and `:windows_1250` to
+  `:windows_1258`, for `"VENDORS/MICSFT/WINDOWS/CP874"` and so on. Like the
+  other aliases, `Codepagex` has them only for the encodings it is configured
+  with.
+
 ## 0.2.0 (2026-10-09)
 
 ### Changes that may affect existing code
