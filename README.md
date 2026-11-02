@@ -93,8 +93,8 @@ configuration at all:
         encodings: [:ascii, :iso_8859_1, :windows_1251, :windows_1252]
     end
 
-    iex> MyLib.Encodings.to_string(<<0xC0, 0xE1>>, :windows_1251)
-    {:ok, "Аб"}
+    MyLib.Encodings.to_string(<<0xC0, 0xE1>>, :windows_1251)
+    #=> {:ok, "Аб"}
 ```
 
 The module has the same functions as `Codepagex`, for its encodings only. The

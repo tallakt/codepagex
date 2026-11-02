@@ -1,4 +1,7 @@
 defmodule Codepagex do
+  # The README is the moduledoc, and its examples doctests: recompiled when it changes.
+  @external_resource "README.md"
+
   # unfortunately exdoc doesn't support ``` fenced blocks
   @moduledoc File.read!("README.md")
              |> String.split("\n")
